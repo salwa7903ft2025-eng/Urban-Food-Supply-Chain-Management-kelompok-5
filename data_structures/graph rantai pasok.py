@@ -1,5 +1,5 @@
 from collection imnport deque
-
+#kiew aryo :vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 # 1. Struktur data untuk Jalur (Edge)
 Edge:
 r__init__(self, tujuan, jarak_km, biaya_per_km):
