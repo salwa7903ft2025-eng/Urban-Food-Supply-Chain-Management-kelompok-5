@@ -1,4 +1,3 @@
-#ntar gw lanjut :v
 from dataclasses import dataclass
 import time
 
@@ -71,7 +70,7 @@ class PriorityQueueKirim:
             current.next = new_node
 
         self._size += 1
-
+#ntar gw lanjut :v
     def dequeue(self):
         """
         Menghapus pengiriman prioritas tertinggi.
@@ -133,43 +132,43 @@ class PriorityQueueKirim:
 # CONTOH PENGGUNAAN
 # =========================
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    pq = PriorityQueueKirim()
+#     pq = PriorityQueueKirim()
 
-    p1 = Pengiriman(
-        1, "PTN01", "PSR01",
-        "PRD-001", 100,
-        3,
-        time.time()
-    )
+#     p1 = Pengiriman(
+#         1, "PTN01", "PSR01",
+#         "PRD-001", 100,
+#         3,
+#         time.time()
+#     )
 
-    p2 = Pengiriman(
-        2, "PTN02", "PSR02",
-        "PRD-002", 50,
-        1,
-        time.time()
-    )
+#     p2 = Pengiriman(
+#         2, "PTN02", "PSR02",
+#         "PRD-002", 50,
+#         1,
+#         time.time()
+#     )
 
-    p3 = Pengiriman(
-        3, "PTN03", "PSR03",
-        "PRD-003", 70,
-        2,
-        time.time()
-    )
+#     p3 = Pengiriman(
+#         3, "PTN03", "PSR03",
+#         "PRD-003", 70,
+#         2,
+#         time.time()
+#     )
 
-    pq.enqueue(p1)
-    pq.enqueue(p2)
-    pq.enqueue(p3)
+#     pq.enqueue(p1)
+#     pq.enqueue(p2)
+#     pq.enqueue(p3)
 
-    print("Isi Priority Queue:")
-    pq.display()
+#     print("Isi Priority Queue:")
+#     pq.display()
 
-    print("\nProses Pengiriman:")
-    while not pq.is_empty():
-        kirim = pq.dequeue()
+#     print("\nProses Pengiriman:")
+#     while not pq.is_empty():
+#         kirim = pq.dequeue()
 
-        print(
-            f"Memproses {kirim.kode_produk} "
-            f"dengan prioritas {kirim.prioritas}"
-        )
+#         print(
+#             f"Memproses {kirim.kode_produk} "
+#             f"dengan prioritas {kirim.prioritas}"
+#         )
