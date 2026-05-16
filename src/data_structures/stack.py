@@ -1,31 +1,23 @@
-from .linked_list import LLNode
+class Node:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
 
 class Stack:
-
     def __init__(self):
         self.top = None
-        self.size = 0
 
     def push(self, data):
-
-        node = LLNode(data)
-        node.next = self.top
-        self.top = node
-
-        self.size += 1
+        new_node = Node(data)
+        new_node.next = self.top
+        self.top = new_node
 
     def pop(self):
-
         if not self.top:
             return None
-
-        node = self.top
-        self.top = node.next
-        self.size -= 1
-
-        return node.data
+        popped = self.top.data
+        self.top = self.top.next
+        return popped
 
     def peek(self):
-
-        if self.top:
-            return self.top.data
+        return self.top.data if self.top else None
