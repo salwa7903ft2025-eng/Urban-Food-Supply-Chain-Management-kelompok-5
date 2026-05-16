@@ -1,1 +1,0 @@
-# wajib: cara install & jalankan
