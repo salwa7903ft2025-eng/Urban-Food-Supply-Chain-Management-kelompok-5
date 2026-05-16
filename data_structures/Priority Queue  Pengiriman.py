@@ -127,11 +127,6 @@ class PriorityQueueKirim:
     def __len__(self):
         return self._size
 
-
-# =========================
-# CONTOH PENGGUNAAN
-# =========================
-
 # if __name__ == "__main__":
 
 #     pq = PriorityQueueKirim()
