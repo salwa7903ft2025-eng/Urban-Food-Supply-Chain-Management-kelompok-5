@@ -93,4 +93,3 @@ if __name__ == "__main__":
     katalog.filter_kadaluarsa(katalog.root, 4)
 
     print("\n" + "="*60)
-    
