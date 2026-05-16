@@ -1,103 +1,107 @@
+import sys
+import os
+
+# Menambahkan path folder agar modul 'node' terdeteksi dengan baik
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 try:
-    from .node import Node 
+    from node import Node
 except ImportError:
-    from node import Node  
+    from .node import Node
 
 class BSTKatalog:
-    """
-    Class BSTKatalog untuk mengelola data produk dalam Urban Food Supply Chain.
-    Menggunakan struktur Binary Search Tree untuk efisiensi pencarian O(log n).
-    """
     def __init__(self):
-        # Inisialisasi root sebagai None (Pohon Kosong)
+        # Inisialisasi akar pohon (root) sebagai None (Pohon Kosong)
         self.root = None
 
-    def tambah_produk(self, kode, nama):
-        """
-        Public method untuk menambah produk baru ke dalam katalog.
-        """
+    def insert(self, produk):
+        """Menambahkan objek Produk ke dalam BST berdasarkan kode_produk."""
         if self.root is None:
-            self.root = Node({'kode': kode, 'nama': nama})
+            self.root = Node(produk)
         else:
-            self._tambah_recursive(self.root, kode, nama)
+            self._insert_recursive(self.root, produk)
 
-    def _tambah_recursive(self, current, kode, nama):
-        """
-        Helper method (Private) untuk menyisipkan node secara rekursif.
-        """
-        if kode < current.data['kode']:
+    def _insert_recursive(self, current, produk):
+        if produk.kode < current.data.kode:
             if current.left is None:
-                current.left = Node({'kode': kode, 'nama': nama})
+                current.left = Node(produk)
             else:
-                self._tambah_recursive(current.left, kode, nama)
-        elif kode > current.data['kode']:
+                self._insert_recursive(current.left, produk)
+        elif produk.kode > current.data.kode:
             if current.right is None:
-                current.right = Node({'kode': kode, 'nama': nama})
+                current.right = Node(produk)
             else:
-                self._tambah_recursive(current.right, kode, nama)
+                self._insert_recursive(current.right, produk)
 
-    def cari_produk(self, kode):
-        """
-        Public method untuk mencari informasi produk berdasarkan kode.
-        """
-        return self._cari_recursive(self.root, kode)
+    def search(self, kode):
+        """Mencari produk dan mengembalikan data produknya (bukan objek Node)."""
+        res = self._search_recursive(self.root, kode)
+        return res.data if res else None
 
-    def _cari_recursive(self, current, kode):
-        """
-        Helper method (Private) untuk pencarian secara rekursif.
-        """
-        if current is None or current.data['kode'] == kode:
+    def _search_recursive(self, current, kode):
+        if current is None or current.data.kode == kode:
             return current
-        
-        if kode < current.data['kode']:
-            return self._cari_recursive(current.left, kode)
-        return self._cari_recursive(current.right, kode)
+        if kode < current.data.kode:
+            return self._search_recursive(current.left, kode)
+        return self._search_recursive(current.right, kode)
 
-    def cetak_katalog_inorder(self, current):
-        """
-        Menampilkan semua produk secara berurutan berdasarkan kode (In-order Traversal).
-        Sering ditanyakan oleh dosen saat praktikum.
-        """
+    def update_stok(self, kode, delta):
+        """Update stok produk berdasarkan delta (+ atau -)."""
+        produk = self.search(kode)
+        if produk:
+            produk.stok += delta
+            return True
+        return False
+
+    def filter_kadaluarsa(self, current, maks_hari):
+        """Menampilkan produk yang sisa harinya <= maks_hari (In-order)."""
         if current:
-            self.cetak_katalog_inorder(current.left)
-            print(f" > [ID: {current.data['kode']}] Nama: {current.data['nama']}")
-            self.cetak_katalog_inorder(current.right)
+            self.filter_kadaluarsa(current.left, maks_hari)
+            if current.data.masa_kadaluarsa_hari <= maks_hari:
+                print(f" > [ALERT] {current.data.nama} (Kode: {current.data.kode}) - Sisa {current.data.masa_kadaluarsa_hari} hari!")
+            self.filter_kadaluarsa(current.right, maks_hari)
 
-# --- PROGRAM UTAMA (GAYA DOSEN) ---
+    def inorder(self, current):
+        """Menampilkan semua produk urut berdasarkan kode."""
+        if current:
+            self.inorder(current.left)
+            p = current.data
+            print(f" > [Kode: {p.kode}] {p.nama:15} | Stok: {p.stok:3} | Exp: {p.masa_kadaluarsa_hari:3} hari")
+            self.inorder(current.right)
+
+# --- Demonstrasi Sesuai Starter.py Dosen ---
 if __name__ == "__main__":
+    from dataclasses import dataclass
+
+    @dataclass
+    class Produk:
+        kode: str
+        nama: str
+        kategori: str
+        harga_satuan: float
+        stok: int
+        masa_kadaluarsa_hari: int
+
     katalog = BSTKatalog()
     
-    print("\n" + "="*50)
-    print("SISTEM MANAJEMEN KATALOG URBAN FOOD - KELOMPOK 5")
-    print("="*50)
+    print("\n" + "="*60)
+    print("SISTEM MANAGEMENT KATALOG - URBAN FOOD SUPPLY CHAIN")
+    print("KELOMPOK 5 - TEKNOLOGI INFORMASI")
+    print("="*60)
 
-    # 1. Menambahkan beberapa data produk
-    produk_list = [
-        (105, "Cabai Merah"),
-        (102, "Beras Premium"),
-        (110, "Tomat Organik"),
-        (101, "Bawang Putih"),
-        (108, "Minyak Goreng")
-    ]
+    # Contoh input data lengkap sesuai spesifikasi tugas
+    katalog.insert(Produk("105", "Cabai Merah", "SAYUR", 25000.0, 50, 5))
+    katalog.insert(Produk("101", "Beras Premium", "BAHAN_POKOK", 14000.0, 200, 180))
+    katalog.insert(Produk("110", "Tomat Organik", "SAYUR", 18000.0, 30, 3))
+    katalog.insert(Produk("103", "Daging Ayam", "DAGING", 35000.0, 15, 2))
 
-    for kode, nama in produk_list:
-        katalog.tambah_produk(kode, nama)
-    
-    print(f"Berhasil menambahkan {len(produk_list)} produk ke sistem.")
+    print("\n[INFO] Daftar Katalog Produk (In-order):")
+    katalog.inorder(katalog.root)
 
-    # 2. Menampilkan katalog secara berurutan
-    print("\nDAFTAR KATALOG PRODUK (Urut Kode):")
-    katalog.cetak_katalog_inorder(katalog.root)
+    print("\n[SISTEM] Update stok Beras (Kode 101) +50...")
+    katalog.update_stok("101", 50)
 
-    # 3. Simulasi Pencarian
-    print("\nFITUR PENCARIAN PRODUK:")
-    target = 110
-    print(f"Mencari produk dengan Kode: {target}...")
-    
-    hasil = katalog.cari_produk(target)
-    if hasil:
-        print(f"HASIL: Produk ditemukan! Nama: {hasil.data['nama']}")
-    else:
-        print("HASIL: Produk tidak ditemukan dalam sistem.")
-    
-    print("="*50 + "\n")
+    print("\n[FILTER] Produk hampir kadaluarsa (<= 4 hari):")
+    katalog.filter_kadaluarsa(katalog.root, 4)
+
+    print("="*60 + "\n")
