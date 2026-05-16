@@ -1,35 +1,16 @@
-class TreeNode:
-    def __init__(self, data):
-        self.data = data
-        self.left = None
-        self.right = None
-
-class BST:
+class Graph:
     def __init__(self):
-        self.root = None
+        self.adj_list = {}
 
-    def insert(self, data):
-        if not self.root:
-            self.root = TreeNode(data)
-        else:
-            self._insert_rec(self.root, data)
+    def add_vertex(self, vertex):
+        if vertex not in self.adj_list:
+            self.adj_list[vertex] = []
 
-    def _insert_rec(self, node, data):
-        if data < node.data:
-            if not node.left:
-                node.left = TreeNode(data)
-            else:
-                self._insert_rec(node.left, data)
-        else:
-            if not node.right:
-                node.right = TreeNode(data)
-            else:
-                self._insert_rec(node.right, data)
+    def add_edge(self, v1, v2):
+        if v1 in self.adj_list and v2 in self.adj_list:
+            self.adj_list[v1].append(v2)
+            self.adj_list[v2].append(v1) # Hapus baris ini jika Graph Berarah (Directed)
 
-    def inorder(self, node):
-        if node:
-            self.inorder(node.left)
-            print(node.data, end=" ")
-            self.inorder(node.right)
-
-
+    def print_graph(self):
+        for vertex in self.adj_list:
+            print(f"{vertex} -> {', '.join(map(str, self.adj_list[vertex]))}")
