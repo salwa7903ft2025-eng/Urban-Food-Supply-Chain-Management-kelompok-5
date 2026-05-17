@@ -30,5 +30,6 @@ class Graph:
    self.adj_list[asal].append(Edge(tujuan, jarak_km, biaya_per_km))
    self.adj_list[tujuan].append(Edge(asal, jarak_km, biaya_per_km))
    print(f"Jalur dibuat: {asal} <---> {tujuan}")
+   # TEST COMMIT
 
          
