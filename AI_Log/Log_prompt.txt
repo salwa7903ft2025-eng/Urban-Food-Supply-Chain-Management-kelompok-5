@@ -24,4 +24,4 @@ AI memberikan potongan kode 'sys.path.append' untuk memanipulasi path pencarian 
 1. Struktur folder konsisten di bawah folder src/.
 2. Penamaan file sudah Pythonic (tanpa spasi).
 3. Program berjalan normal tanpa error import.
-============================================================
+=============================================================
