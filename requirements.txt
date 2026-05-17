@@ -1,1 +1,10 @@
-#daftar library Python yang dipakai
+# ==============================================================================
+# REQUIREMENTS.TXT - Urban Food Supply Chain Management
+# Kelompok 5 - S1 Teknik Elektro UNY
+# ==============================================================================
+
+# Catatan:
+# Proyek ini menggunakan Python Standard Library (Built-in).
+# Tidak ada library eksternal (pip) yang wajib di-install untuk menjalankan program.
+
+python>=3.10
