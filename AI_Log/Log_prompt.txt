@@ -5,26 +5,36 @@ Tanggal: 16 Mei 2026
 ============================================================
 
 [PROMPT - MASALAH STRUKTUR FOLDER]
-User: "Struktur proyekku berantakan karena ada struktur ganda sm folder kosong, bantu rapiinn struktur folder Python untuk tugas ini? aku ada file node.py sm modul seperti BST Katalog Produk.py. itu yang bener ditaruh dimana biar sesuai?"
+User: "struktur proyekku berantakan karena ada struktur ganda sm folder kosong, bantu rapiinn struktur folder Python untuk tugas ini? aku ada file node.py sm modul seperti BST Katalog Produk.py. itu yang bener ditaruh dimana biar sesuai?"
 
 [AI RESPONSE & SOLUSI]
 AI menyarankan standar industri dengan memindahkan semua kodingan ke dalam folder 'src/'. 
 - File 'node.py' dipindahkan ke 'src/data_structures/'.
 - File 'BST Katalog Produk.py' diubah namanya menjadi 'bst_katalog_produk.py' (snake_case) dan diletakkan di 'src/modules/'.
-- AI juga memberikan instruksi untuk menghapus folder duplikat di root agar tidak terjadi redundansi (struktur ganda).
+- AI memberikan instruksi untuk menghapus folder duplikat di root agar tidak terjadi redundansi.
 
 [PROMPT - MASALAH IMPORT & PATHING]
-User: "wes dipindah, muncul error ModuleNotFoundError: No module named 'node'. Gimana cara benerinnya?"
+User: "aku kan udah pindahin file ke dalem folder src/modules sm src/data_structures, muncul error ModuleNotFoundError: No module named 'node'. Gimana cara benerinnya tanpa ngerusak folder?"
 
 [AI RESPONSE & SOLUSI]
-AI menjelaskan bahwa karena folder 'modules' dan 'data_structures' terpisah, program tidak bisa menemukan modul 'node' secara langsung. 
-AI memberikan potongan kode 'sys.path.append' untuk memanipulasi path pencarian Python agar bisa mengakses folder di luar direktori aktif.
+AI menjelaskan bahwa karena folder 'modules' dan 'data_structures' terpisah, Python tidak bisa menemukan modul secara otomatis. 
+- AI memberikan solusi menggunakan 'sys.path.append' untuk memanipulasi path pencarian Python.
+- Menambahkan kode: sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))) agar folder data_structures bisa diakses dari modules.
+
+[PROMPT - OPTIMASI LOGIKA BST & FITUR ALERT]
+User: "aku lagi ngerapiin file bst_katalog_produk.py. mau pastiin fungsinya udah bener buat insert, search, dan filter_kadaluarsa. bantuinn review kodenya biar lebih bersih tapi tetap fungsional buat struktur folder yang baru?"
+
+[AI RESPONSE & SOLUSI]
+AI melakukan review dan optimasi pada implementasi Binary Search Tree (BST):
+- Insert & Search: Menggunakan logika rekursif agar pencarian data produk efisien dengan kompleksitas O(log n).
+- Filter Kadaluarsa: Menggunakan metode In-order Traversal untuk mengecek sisa masa simpan produk secara berurutan berdasarkan kode.
+- Fitur Alert: Menambahkan logika pengkondisian untuk memberikan peringatan otomatis jika produk mendekati masa kadaluarsa (<= 4 hari).
 
 [HASIL AKHIR]
-1. Struktur folder konsisten di bawah folder src/.
-2. Penamaan file sudah Pythonic (tanpa spasi).
-3. Program berjalan normal tanpa error import.
-=============================================================
+1. Struktur folder konsisten dan profesional di bawah direktori src/.
+2. Penamaan file sudah sesuai standar Python (snake_case).
+3. Program berjalan normal tanpa error import dan memiliki fitur filter kadaluarsa yang informatif untuk kebutuhan sistem Urban Food Supply Chain.
+==========================================================
 1.  Pembuatan data structures - Hanif
 
     Prompt :
