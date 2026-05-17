@@ -1,23 +1,22 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
+from .node import Node  
 
 class Stack:
     def __init__(self):
-        self.top = None
+        self.top = None  
 
-    def push(self, data):
-        new_node = Node(data)
+    def is_empty(self):
+        return self.top is None  
+
+    def push(self, item):
+        new_node = Node(item)
         new_node.next = self.top
         self.top = new_node
 
     def pop(self):
-        if not self.top:
-            return None
-        popped = self.top.data
+        if self.is_empty():
+            return None  
+        
+        # PERBAIKAN: Cek node.py lu pake .data atau .item? Umumnya .data
+        popped_item = self.top.data  
         self.top = self.top.next
-        return popped
-
-    def peek(self):
-        return self.top.data if self.top else None
+        return popped_item
