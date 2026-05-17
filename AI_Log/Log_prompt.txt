@@ -48,3 +48,18 @@ AI melakukan review dan optimasi pada implementasi Binary Search Tree (BST):
     
     Output :
     implementasi struktur dasar.png
+
+==========================================================
+AI log Modul 2 : Circular Queue
+Prompt : 
+Saya ingin membuat sebuah program, jadi buatkan kode syntax yang lengkap seperti pada contoh starter py yang ada di foto untuk menyelesaikan modul nomer 2, untuk kapasitas buffer sudah tertera juga di foto. untuk setiap node Circular Queue berbasis array.
+
+AI response :
+AI memberikan kode program untuk menyelesaikan masalah yang terkirm.PNG
+
+Prompt : -catatan untuk dataclass dan typing pada modul 2
+"Jelaskan apa maksud dari dataclass dan juga typing pada kode program tersebut"
+
+AI response :
+- jawaban untuk dataclass: Digunakan sebagai decorator untuk menyederhanakan pembuatan kelas Produk yang fokus utamanya adalah menyimpan data (Data Object).
+- jawaban untuk typing: Modul bawaan Python yang digunakan untuk Type Hinting (Petunjuk Tipe Data). Python adalah bahasa yang dinamis (tidak wajib menentukan tipe data), namun typing membantu memberikan petunjuk agar kode lebih mudah dipahami dan meminimalkan kesalahan logika.
