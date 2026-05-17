@@ -1,0 +1,263 @@
+ KRITERIA TOPIK TEAM BASED PROJECT Semua topik memenuhi kriteria berikut:
+ Mengintegrasikan MINIMAL 3 struktur data berbeda dari materi kuliah (Linked List, Stack, Queue, BST, Graph) 
+ Wajib mengimplementasikan semua struktur data dari nol tanpa library; analisis Big-O wajib untuk setiap operasi utama 
+ Pipeline aplikasi memiliki ≥ 4 modul fungsional yang saling berinteraksi (bukan hanya demo terisolasi) 
+ Wajib menyertakan eksperimen perbandingan performa (minimal 3 ukuran dataset berbeda, tabel runtime) 
+ Wajib menjawab 5 pertanyaan analisis lanjutan yang menuntut pemahaman mendalam tentang trade-off efisiensi 
+ Wajib mendemonstrasikan program berjalan secara interaktif (CLI) dengan skenario uji yang realistis
+
+10.1 Latar Belakang
+Ketahanan pangan kota bergantung pada efisiensi rantai pasok dari petani ke konsumen. Kota Yogyakarta mendistribusikan ratusan ton produk pertanian setiap hari melalui jaringan petani, distributor, gudang, dan pasar. Graf berbobot memodelkan jalur distribusi dan biaya pengiriman, Circular Queue mensimulasikan buffer FIFO stok gudang (first-in first-out untuk minimasi kadaluarsa), Priority Queue memprioritaskan pengiriman produk yang mendekati kadaluarsa, dan BST menyediakan katalog produk yang dapat dicari cepat. Proyek ini membangun sistem manajemen rantai pasok untuk 26 node distribusi dan 12 jenis produk pangan.
+
+10.2 Parameter Sistem
+- Node rantai pasok: 10 petani + 5 dist. + 8 pasar + 3 gudang = 26 node
+- Jalur distribusi (edge): ~38 edge berbobot (jarak km & biaya)
+- Jenis produk: 12 produk (Beras, Cabai, Tomat, dll.)
+- np.random.seed: 61
+- Kapasitas buffer gudang: 50 slot (Circular Queue per node)
+- Operasi minimum: 350 event campuran
+
+10.3 Arsitektur Pipeline
+
+No. 1
+Modul: Graph Rantai Pasok
+Deskripsi & Spesifikasi: Graf berbobot tidak berarah dengan dua atribut edge: jarak_km dan biaya_per_km. Dijkstra menggunakan total_biaya = jarak * biaya_km sebagai bobot. Mendukung: tambah_node, tambah_jalur, tetangga. DFS/BFS untuk audit konektivitas.
+Big-O: add O(1), BFS/DFS O(V+E).
+
+No. 2
+Modul: Circular Queue Buffer Gudang
+Deskripsi & Spesifikasi: Setiap node memiliki Circular Queue berbasis array (fixed capacity=50) untuk menyimpan produk secara FIFO. Produk masuk (enqueue) dari supplier, keluar (dequeue) ke tujuan berikutnya. Prinsip FIFO mencegah penumpukan produk lama.
+Big-O: enqueue O(1), dequeue O(1), is_full O(1).
+
+No. 3
+Modul: Priority Queue Pengiriman
+Deskripsi & Spesifikasi: Prioritas pengiriman: MENDESAK (masa kadaluarsa <= 3 hari), NORMAL (4-7 hari), REGULER (>7 hari). Mendukung: KIRIM (enqueue), PROSES_KIRIM (dequeue & eksekusi). Produk MENDESAK selalu dikirim lebih dulu.
+Big-O: enqueue O(n), dequeue O(1).
+
+No. 4
+Modul: BST Katalog Produk
+Deskripsi & Spesifikasi: BST dengan kunci = kode_produk. Menyimpan: kode, nama, kategori, harga, stok, masa_kadaluarsa. Mendukung: insert, search, update_stok, filter_kadaluarsa(maks_hari) (inorder dengan filter), inorder.
+Big-O: O(log n) rata-rata.
+
+No. 5
+Modul: Dijkstra Biaya Minimum
+Deskripsi & Spesifikasi: Dijkstra dari setiap node sumber menggunakan bobot = jarak * biaya km untuk mencari jalur distribusi termurah. Rekonstruksi jalur dan tampilkan total biaya perjalanan. Audit biaya: urutkan jalur berdasarkan biaya menggunakan Merge Sort.
+Big-O: O(V^2+E).
+
+No. 6
+Modul: CLI Rantai Pasok
+Deskripsi & Spesifikasi: Implementasikan: KIRIM <dari> <ke> <kode> <jumlah>, PROSES_KIRIM, RUTE_MURAH <dari> <ke>, CEK_STOK <kode>, KADALUARSA <maks_hari>, LAPORAN_DISTRIBUSI, BUFFER <node>, KELUAR.
+
+isi data structures (ini sebagai referensi untuk modul-modul di src/modules/ ) :
+
+    isi linked list py :
+
+    from typing import Optional, Any
+
+    class Node:
+        def __init__(self, data: Any):
+            self.data: Any = data
+            self.next: Optional['Node'] = None
+
+    class LinkedList:
+        def __init__(self):
+            self.head: Optional[Node] = None
+
+        def append(self, data: Any) -> None:
+            new_node = Node(data)
+            if self.head is None:
+                self.head = new_node
+                return
+            current = self.head
+            while current.next is not None:
+                current = current.next
+            current.next = new_node
+
+        def delete(self, key: Any) -> bool:
+            if self.head is None:
+                return False
+
+            if self.head.data == key:
+                self.head = self.head.next
+                return True
+
+            current = self.head
+            while current.next is not None:
+                if current.next.data == key:
+                    current.next = current.next.next
+                    return True
+                current = current.next
+
+            return False
+
+        def display(self) -> None:
+            current = self.head
+            while current is not None:
+                print(current.data, end=" -> ")
+                current = current.next
+            print("None")
+
+    isi stack py :
+
+    from .node import Node  
+
+    class Stack:
+        def __init__(self):
+            self.top = None  
+
+        def is_empty(self):
+            return self.top is None  
+
+        def push(self, item):
+            new_node = Node(item)
+            new_node.next = self.top
+            self.top = new_node
+
+        def pop(self):
+            if self.is_empty():
+                return None  
+            
+            # PERBAIKAN: Cek node.py lu pake .data atau .item? Umumnya .data
+            popped_item = self.top.data  
+            self.top = self.top.next
+            return popped_item
+
+    isi queue ll py :
+
+    # Import Node dari file node.py yang berada di folder yang sama
+    from data_structures.node import Node
+
+    class QueueLL:
+        def __init__(self):
+            self.front = None
+            self.rear = None
+
+        def enqueue(self, data):
+            new_node = Node(data)
+            if not self.rear:
+                self.front = self.rear = new_node
+                return
+            self.rear.next = new_node
+            self.rear = new_node
+
+        def dequeue(self):
+            if not self.front:
+                return None
+            temp = self.front
+            self.front = self.front.next
+            if not self.front:
+                self.rear = None
+            return temp.data
+
+    isi bst py :
+
+    class TreeNode:
+        def __init__(self, data):
+            self.data = data
+            self.left = None
+            self.right = None
+
+    class BST:
+        def __init__(self):
+            self.root = None
+
+        def insert(self, data):
+            if not self.root:
+                self.root = TreeNode(data)
+            else:
+                self._insert_rec(self.root, data)
+
+        def _insert_rec(self, node, data):
+            if data < node.data:
+                if not node.left:
+                    node.left = TreeNode(data)
+                else:
+                    self._insert_rec(node.left, data)
+            else:
+                if not node.right:
+                    node.right = TreeNode(data)
+                else:
+                    self._insert_rec(node.right, data)
+
+        def inorder(self, node):
+            if node:
+                self.inorder(node.left)
+                print(node.data, end=" ")
+                self.inorder(node.right)
+
+    isi graph py :
+
+    # Isi dari src/data_structures/graph.py
+    class Graph:
+        def __init__(self):
+            # Pastikan namanya 'adj_list' dan menggunakan dictionary {}
+            self.adj_list = {} 
+
+        def add_vertex(self, vertex):
+            if vertex not in self.adj_list:
+                self.adj_list[vertex] = []
+
+        def add_edge(self, v1, v2):
+            if v1 in self.adj_list and v2 in self.adj_list:
+                self.adj_list[v1].append(v2)
+                self.adj_list[v2].append(v1) # Hapus baris ini jika Directed Graph
+
+        def print_graph(self):
+            for vertex in self.adj_list:
+                print(f"{vertex} -> {self.adj_list[vertex]}")
+
+struktur file :
+
+TPB-ASD-URBAN-FOOD-SUPPL...
+├── AI_Log/
+│   ├── screenshots/
+│   └── Log_prompt.txt
+├── docs/
+├── experiments/
+│   └── benchmark.py
+├── src/
+│   ├── __pycache__/
+│   │   └── __init__.cpython-313.pyc
+│   ├── data_structures/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── bst.py
+│   │   ├── circular_queue.py
+│   │   ├── graph.py
+│   │   ├── linked_list.py
+│   │   ├── node.py
+│   │   ├── queue_ll.py
+│   │   └── stack.py
+│   ├── modules/
+│   │   ├── __pycache__/
+│   │   ├── __init__.py
+│   │   ├── bst_katalog_produk.py
+│   │   ├── circular_queue_buffer_gudang.py
+│   │   ├── cli_rantai_pasok.py
+│   │   ├── dijkstra_biaya_minimum.py
+│   │   ├── graph_rantai_pasok.py
+│   │   └── priority_queue_pengiriman.py
+│   ├── __init__.py
+│   └── main.py
+├── tests/
+│   ├── __pycache__/
+│   │   └── __init__.py
+│   ├── .gitkeep
+│   ├── test_bst_katalog_produk.py
+│   ├── test_circular_queue_buffer_gudang.py
+│   ├── test_cli_rantai_pasok.py
+│   ├── test_dijkstra_biaya_minimum.py
+│   ├── test_graph_rantai_pasok.py
+│   ├── test_graph.py
+│   ├── test_linked_list.py
+│   ├── test_priority_queue_pengiriman.py
+│   ├── test_queue_ll.py
+│   └── test_stack.py
+├── .gitignore
+├── README.md
+└── requirements.txt
+
+yang gw minta :
+
+- buatin setiap modul di src/modules/ sesuai dengan struktur file yang digunakan, dengan fungsi-fungsi dasar dan analisis Big-O untuk setiap operasi utama. Pastikan setiap modul dapat berinteraksi dengan modul lainnya sesuai dengan arsitektur pipeline dan konten data structures yang sudah ditentukan.
+- buatin test file di tests/ untuk setiap module 

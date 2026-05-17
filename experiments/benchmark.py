@@ -15,7 +15,7 @@ from src.modules.dijkstra_biaya_minimum import dijkstra_biaya_minimum
 random.seed(61)
 
 # Minimal 3 ukuran dataset, kita gunakan 4 agar tren grafiknya lebih terlihat
-DATASET_SIZES = [100, 1000, 5000]
+DATASET_SIZES = [50,200,500]
 
 def benchmark_priority_queue(size):
     pq = PriorityQueuePengiriman()
@@ -73,7 +73,7 @@ def benchmark_dijkstra(size):
     end_time = time.perf_counter()
 
     return end_time - start_time
-    
+
 def run_benchmarks():
     print("="*65)
     print(" EKSPERIMEN PERBANDINGAN PERFORMA (RUNTIME BENCHMARK)".center(65))

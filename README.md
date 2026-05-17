@@ -39,7 +39,7 @@ Penyusunan folder mengikuti struktur yang telah disepakati:
 2. Clone repositori ini ke lokal.
 3. Jalankan program utama melalui terminal:
    ```bash
-   python src/main.py
-
+   python -m src.main
 ---
+
 *Proyek ini disusun untuk memenuhi tugas besar mata kuliah Algoritma dan Struktur Data (S1 Teknik Elektro UNY).*
