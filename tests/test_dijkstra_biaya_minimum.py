@@ -6,7 +6,7 @@ sys.path.append(
         os.path.join(os.path.dirname(__file__), '../src')
     )
 )
-a
+
 from modules.graph_rantai_pasok import GraphRantaiPasok
 from modules.dijkstra_biaya_minimum import dijkstra_biaya, rekonstruksi_jalur 
 
