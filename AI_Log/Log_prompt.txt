@@ -1,3 +1,30 @@
+============================================================
+AI LOG - KELOMPOK 5 (MODUL 4: BST KATALOG)
+Nama: Salwa Azmi Salsabila
+Tanggal: 16 Mei 2026
+============================================================
+
+[PROMPT - MASALAH STRUKTUR FOLDER]
+User: "Struktur proyekku berantakan karena ada struktur ganda sm folder kosong, bantu rapiinn struktur folder Python untuk tugas ini? aku ada file node.py sm modul seperti BST Katalog Produk.py. itu yang bener ditaruh dimana biar sesuai?"
+
+[AI RESPONSE & SOLUSI]
+AI menyarankan standar industri dengan memindahkan semua kodingan ke dalam folder 'src/'. 
+- File 'node.py' dipindahkan ke 'src/data_structures/'.
+- File 'BST Katalog Produk.py' diubah namanya menjadi 'bst_katalog_produk.py' (snake_case) dan diletakkan di 'src/modules/'.
+- AI juga memberikan instruksi untuk menghapus folder duplikat di root agar tidak terjadi redundansi (struktur ganda).
+
+[PROMPT - MASALAH IMPORT & PATHING]
+User: "wes dipindah, muncul error ModuleNotFoundError: No module named 'node'. Gimana cara benerinnya?"
+
+[AI RESPONSE & SOLUSI]
+AI menjelaskan bahwa karena folder 'modules' dan 'data_structures' terpisah, program tidak bisa menemukan modul 'node' secara langsung. 
+AI memberikan potongan kode 'sys.path.append' untuk memanipulasi path pencarian Python agar bisa mengakses folder di luar direktori aktif.
+
+[HASIL AKHIR]
+1. Struktur folder konsisten di bawah folder src/.
+2. Penamaan file sudah Pythonic (tanpa spasi).
+3. Program berjalan normal tanpa error import.
+=============================================================
 1.  Pembuatan data structures - Hanif
 
     Prompt :
