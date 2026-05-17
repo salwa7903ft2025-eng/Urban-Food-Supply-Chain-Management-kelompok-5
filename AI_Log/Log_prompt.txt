@@ -66,846 +66,2304 @@ AI response :
 
 ============================================================
 AI LOG - KELOMPOK 5 (MODULES)
+Nama: Hanif Jaleel Amrin
 Tanggal: 17 Mei 2026
 ============================================================
 
-[PROMPT - FULL REMAKE MODULE-MODULE]
+    [PROMPT - FULL REMAKE MODULES]
 
-(Attachment file structure)
-tbp-asd-kelompok-XX/ ← root repository
-├── README.md ← wajib: cara install & jalankan
-├── requirements.txt ← daftar library Python yang dipakai
-├── .gitignore ← abaikan __pycache__, *.pyc, .env
-│
-├── src/ ← semua kode sumber
-│ ├── data_structures/ ← implementasi murni (Linked List, Stack, dll.)
-│ │ ├── linked_list.py
-│ │ ├── stack.py
-│ │ ├── queue_ll.py
-│ │ ├── bst.py
-│ │ └── graph.py
-│ ├── modules/ ← modul aplikasi per topik
-│ │ ├── graph_rantai_pasok.py
-│ │ ├── circular_queue_buffer_gudang.py
-│ │ ├── priority_queue_pengiriman.py
-│ │ ├── bst_katalog_produk.py
-│ │ ├── dijkstra_biaya_minimum.py
-│ │ └── cli_rantai_pasok.py
-│ └── main.py ← entry point CLI
-│
-├── tests/ ← unit test (g usah fokus di bagian ini, skip aja)
-│ ├── test_linked_list.py
-│ ├── test_bst.py
-│ └── ...
-│
-├── docs/ ← laporan & slide  (g usah fokus di bagian ini, skip aja)
-│ ├── laporan_final.pdf
-│ └── slide_presentasi.pdf
-│
-├── experiments/ ← skrip eksperimen runtime
-│ └── benchmark.py
-│
-└── AI_Log/ ← wajib jika pakai AI (g usah fokus di bagian ini, skip aja)
-├── Log_prompt.txt
-└── screenshots/
+        (Attachment file structure)
 
-(Attachment starter.py)
+            tbp-asd-kelompok-XX/ ← root repository
+            ├── README.md ← wajib: cara install & jalankan
+            ├── requirements.txt ← daftar library Python yang dipakai
+            ├── .gitignore ← abaikan __pycache__, *.pyc, .env
+            │
+            ├── src/ ← semua kode sumber
+            │ ├── data_structures/ ← implementasi murni (Linked List, Stack, dll.)
+            │ │ ├── linked_list.py
+            │ │ ├── stack.py
+            │ │ ├── queue_ll.py
+            │ │ ├── bst.py
+            │ │ └── graph.py
+            │ ├── modules/ ← modul aplikasi per topik
+            │ │ ├── graph_rantai_pasok.py
+            │ │ ├── circular_queue_buffer_gudang.py
+            │ │ ├── priority_queue_pengiriman.py
+            │ │ ├── bst_katalog_produk.py
+            │ │ ├── dijkstra_biaya_minimum.py
+            │ │ └── cli_rantai_pasok.py
+            │ └── main.py ← entry point CLI
+            │
+            ├── tests/ ← unit test (g usah fokus di bagian ini, skip aja)
+            │ ├── test_linked_list.py
+            │ ├── test_bst.py
+            │ └── ...
+            │
+            ├── docs/ ← laporan & slide  (g usah fokus di bagian ini, skip aja)
+            │ ├── laporan_final.pdf
+            │ └── slide_presentasi.pdf
+            │
+            ├── experiments/ ← skrip eksperimen runtime
+            │ └── benchmark.py
+            │
+            └── AI_Log/ ← wajib jika pakai AI (g usah fokus di bagian ini, skip aja)
+            ├── Log_prompt.txt
+            └── screenshots/
 
-import numpy as np
-import time
-import random
-from dataclasses import dataclass
-from typing import Optional, List, Dict, Tuple
+        (Attachment starter.py)
 
-# Set seed untuk konsistensi data sesuai instruksi soal
-np.random.seed(61)
-random.seed(61)
+            import numpy as np
+            import time
+            import random
+            from dataclasses import dataclass
+            from typing import Optional, List, Dict, Tuple
 
-KATEGORI_PRODUK = ['SAYUR', 'BUAH', 'DAGING', 'IKAN', 'BAHAN_POKOK']
-TIPE_NODE = ['PETANI', 'DISTRIBUTOR', 'PASAR', 'GUDANG']
+            # Set seed untuk konsistensi data sesuai instruksi soal
+            np.random.seed(61)
+            random.seed(61)
 
-@dataclass
-class Produk:
-    kode: str
-    nama: str
-    kategori: str
-    harga_satuan: float
-    stok: int
-    masa_kadaluarsa_hari: int
+            KATEGORI_PRODUK = ['SAYUR', 'BUAH', 'DAGING', 'IKAN', 'BAHAN_POKOK']
+            TIPE_NODE = ['PETANI', 'DISTRIBUTOR', 'PASAR', 'GUDANG']
 
-@dataclass
-class Pengiriman:
-    pengiriman_id: int
-    dari_node: str
-    ke_node: str
-    kode_produk: str
-    jumlah: int
-    prioritas: int  # 1=MENDESAK (kadaluarsa dekat)
-    waktu_kirim: float
+            @dataclass
+            class Produk:
+                kode: str
+                nama: str
+                kategori: str
+                harga_satuan: float
+                stok: int
+                masa_kadaluarsa_hari: int
 
-class LLNode:
-    def __init__(self, data=None):
-        self.data = data
-        self.next = None
+            @dataclass
+            class Pengiriman:
+                pengiriman_id: int
+                dari_node: str
+                ke_node: str
+                kode_produk: str
+                jumlah: int
+                prioritas: int  # 1=MENDESAK (kadaluarsa dekat)
+                waktu_kirim: float
 
-class CircularQueue:
-    """
-    Circular Queue berbasis array (fixed capacity).
-    Mensimulasikan buffer FIFO stok gudang.
-    FIFO = produk pertama masuk, pertama keluar (hindari kadaluarsa).
-    """
-    def __init__(self, kapasitas):
-        self.kapasitas = kapasitas
-        self.buffer = [None] * kapasitas
-        self.front = 0
-        self.rear = 0
-        self._size = 0
+            class LLNode:
+                def __init__(self, data=None):
+                    self.data = data
+                    self.next = None
 
-    def enqueue(self, produk):
-        """Big-O: O(1). Kembalikan False jika penuh."""
-        pass  # TODO: implementasikan logika circular
+            class CircularQueue:
+                """
+                Circular Queue berbasis array (fixed capacity).
+                Mensimulasikan buffer FIFO stok gudang.
+                FIFO = produk pertama masuk, pertama keluar (hindari kadaluarsa).
+                """
+                def __init__(self, kapasitas):
+                    self.kapasitas = kapasitas
+                    self.buffer = [None] * kapasitas
+                    self.front = 0
+                    self.rear = 0
+                    self._size = 0
 
-    def dequeue(self):
-        """Big-O: O(1). Ambil produk terlama (FIFO)."""
-        pass  # TODO: implementasikan
+                def enqueue(self, produk):
+                    """Big-O: O(1). Kembalikan False jika penuh."""
+                    pass  # TODO: implementasikan logika circular
 
-    def is_full(self):
-        return self._size == self.kapasitas
+                def dequeue(self):
+                    """Big-O: O(1). Ambil produk terlama (FIFO)."""
+                    pass  # TODO: implementasikan
 
-    def is_empty(self):
-        return self._size == 0
+                def is_full(self):
+                    return self._size == self.kapasitas
 
-    def __len__(self):
-        return self._size
+                def is_empty(self):
+                    return self._size == 0
 
-class PriorityQueueKirim:
-    """Produk mendekati kadaluarsa dikirim lebih dulu."""
-    def __init__(self):
-        self.head = None
-        self._size = 0
+                def __len__(self):
+                    return self._size
 
-    def enqueue(self, pengiriman):
-        """Big-O: O(n)."""
-        pass  # TODO: implementasikan insertion terurut prioritas
+            class PriorityQueueKirim:
+                """Produk mendekati kadaluarsa dikirim lebih dulu."""
+                def __init__(self):
+                    self.head = None
+                    self._size = 0
 
-    def dequeue(self):
-        """Big-O: O(1)."""
-        pass  # TODO: implementasikan
+                def enqueue(self, pengiriman):
+                    """Big-O: O(n)."""
+                    pass  # TODO: implementasikan insertion terurut prioritas
 
-    def __len__(self):
-        return self._size
+                def dequeue(self):
+                    """Big-O: O(1)."""
+                    pass  # TODO: implementasikan
 
-class Stack:
-    def __init__(self):
-        self.top = None
-        self._size = 0
+                def __len__(self):
+                    return self._size
 
-    def push(self, data):
-        pass  # TODO: Big-O O(1)
+            class Stack:
+                def __init__(self):
+                    self.top = None
+                    self._size = 0
 
-    def pop(self):
-        pass  # TODO: Big-O O(1)
+                def push(self, data):
+                    pass  # TODO: Big-O O(1)
 
-class BSTNodeProd:
-    def __init__(self, produk):
-        self.produk = produk
-        self.left = self.right = None
+                def pop(self):
+                    pass  # TODO: Big-O O(1)
 
-class BSTKatalog:
-    def __init__(self):
-        self.root = None
+            class BSTNodeProd:
+                def __init__(self, produk):
+                    self.produk = produk
+                    self.left = self.right = None
 
-    def insert(self, produk):
-        """Big-O: O(log n). Kunci = produk.kode."""
-        pass  # TODO: implementasikan
+            class BSTKatalog:
+                def __init__(self):
+                    self.root = None
 
-    def search(self, kode):
-        """Big-O: O(log n)."""
-        pass  # TODO: implementasikan
+                def insert(self, produk):
+                    """Big-O: O(log n). Kunci = produk.kode."""
+                    pass  # TODO: implementasikan
 
-    def update_stok(self, kode, delta):
-        """Big-O: O(log n)."""
-        pass  # TODO: cari node, update stok
+                def search(self, kode):
+                    """Big-O: O(log n)."""
+                    pass  # TODO: implementasikan
 
-    def filter_kadaluarsa(self, maks_hari):
-        """Kembalikan produk masa kadaluarsa <= maks_hari. Big-O: O(n)."""
-        pass  # TODO: inorder dengan filter
+                def update_stok(self, kode, delta):
+                    """Big-O: O(log n)."""
+                    pass  # TODO: cari node, update stok
 
-    def inorder(self):
-        """Big-O: O(n)."""
-        pass  # TODO: implementasikan
+                def filter_kadaluarsa(self, maks_hari):
+                    """Kembalikan produk masa kadaluarsa <= maks_hari. Big-O: O(n)."""
+                    pass  # TODO: inorder dengan filter
 
-class EdgeNode:
-    def __init__(self, dest, jarak_km, biaya_per_km):
-        self.dest = dest
-        self.jarak_km = jarak_km
-        self.biaya_per_km = biaya_per_km
-        self.next = None
+                def inorder(self):
+                    """Big-O: O(n)."""
+                    pass  # TODO: implementasikan
 
-class GraphRantaiPasok:
-    def __init__(self):
-        self.adj = {}
-        self.tipe_node = {}
+            class EdgeNode:
+                def __init__(self, dest, jarak_km, biaya_per_km):
+                    self.dest = dest
+                    self.jarak_km = jarak_km
+                    self.biaya_per_km = biaya_per_km
+                    self.next = None
 
-    def tambah_node(self, node_id, tipe):
-        """Big-O: O(1)."""
-        pass  # TODO: implementasikan
+            class GraphRantaiPasok:
+                def __init__(self):
+                    self.adj = {}
+                    self.tipe_node = {}
 
-    def tambah_jalur(self, u, v, jarak, biaya_km):
-        """Big-O: O(1). Graf tidak berarah."""
-        pass  # TODO: implementasikan
+                def tambah_node(self, node_id, tipe):
+                    """Big-O: O(1)."""
+                    pass  # TODO: implementasikan
 
-    def tetangga(self, u):
-        """Big-O: O(deg)."""
-        pass  # TODO: implementasikan
+                def tambah_jalur(self, u, v, jarak, biaya_km):
+                    """Big-O: O(1). Graf tidak berarah."""
+                    pass  # TODO: implementasikan
 
-def dijkstra_biaya(graph, asal):
-    """Shortest path berdasarkan total biaya. Big-O: O(V^2+E)."""
-    INF = float('inf')
-    dist = {v: INF for v in graph.adj}
-    parent = {v: None for v in graph.adj}
-    dist[asal] = 0.0
-    visited = set()
-    # TODO: bobot = jarak_km * biaya_per_km, implementasikan Dijkstra
-    return dist, parent
+                def tetangga(self, u):
+                    """Big-O: O(deg)."""
+                    pass  # TODO: implementasikan
 
-def generate_rantai_pasok(seed=61):
-    rng = np.random.default_rng(seed)
-    nodes = []
-    for i in range(10): nodes.append((f'PTN{i:02d}', 'PETANI'))
-    for i in range(5): nodes.append((f'DST{i:02d}', 'DISTRIBUTOR'))
-    for i in range(8): nodes.append((f'PSR{i:02d}', 'PASAR'))
-    for i in range(3): nodes.append((f'GDG{i:02d}', 'GUDANG'))
-    
-    n = len(nodes)
-    perm = rng.permutation(n)
-    edges = []
-    for i in range(1, n):
-        u, v = nodes[perm[i-1]][0], nodes[perm[i]][0]
-        edges.append((u, v, int(rng.integers(5,200)), round(float(rng.uniform(500,3000)),0)))
+            def dijkstra_biaya(graph, asal):
+                """Shortest path berdasarkan total biaya. Big-O: O(V^2+E)."""
+                INF = float('inf')
+                dist = {v: INF for v in graph.adj}
+                parent = {v: None for v in graph.adj}
+                dist[asal] = 0.0
+                visited = set()
+                # TODO: bobot = jarak_km * biaya_per_km, implementasikan Dijkstra
+                return dist, parent
+
+            def generate_rantai_pasok(seed=61):
+                rng = np.random.default_rng(seed)
+                nodes = []
+                for i in range(10): nodes.append((f'PTN{i:02d}', 'PETANI'))
+                for i in range(5): nodes.append((f'DST{i:02d}', 'DISTRIBUTOR'))
+                for i in range(8): nodes.append((f'PSR{i:02d}', 'PASAR'))
+                for i in range(3): nodes.append((f'GDG{i:02d}', 'GUDANG'))
+                
+                n = len(nodes)
+                perm = rng.permutation(n)
+                edges = []
+                for i in range(1, n):
+                    u, v = nodes[perm[i-1]][0], nodes[perm[i]][0]
+                    edges.append((u, v, int(rng.integers(5,200)), round(float(rng.uniform(500,3000)),0)))
+                    
+                for _ in range(12):
+                    i, j = rng.choice(n, 2, replace=False)
+                    edges.append((nodes[i][0], nodes[j][0], int(rng.integers(5,200)), round(float(rng.uniform(500,3000)),0)))
+                    
+                nama_p = ['Beras','Cabai','Tomat','Ayam','Ikan Lele','Kangkung','Wortel','Kentang','Telur','Tahu','Tempe','Minyak']
+                produk = []
+                for i, nm in enumerate(nama_p):
+                    produk.append(Produk(
+                        f'PRD-{i:03d}', 
+                        nm, 
+                        random.choice(KATEGORI_PRODUK),
+                        round(random.uniform(2000,50000),-2),
+                        random.randint(50,500), 
+                        random.randint(1,30)
+                    ))
+                return nodes, edges, produk
+
+            def main():
+                graph = GraphRantaiPasok()
+                bst_katalog = BSTKatalog()
+                pq_kirim = PriorityQueueKirim()
+                log_transaksi = Stack()
+                buffer_gudang = {}
+                kirim_counter = 0
+                
+                nodes, edges, produk_list = generate_rantai_pasok(seed=61)
+                
+                for nid, tipe in nodes:
+                    graph.tambah_node(nid, tipe)
+                    buffer_gudang[nid] = CircularQueue(kapasitas=50)
+                    
+                for u, v, j, b in edges:
+                    graph.tambah_jalur(u, v, j, b)
+                    
+                for p in produk_list:
+                    bst_katalog.insert(p)
+                    
+                print('Food Supply Chain System Ketik BANTUAN untuk daftar perintah')
+                # TODO: implementasikan loop CLI
+                # Perintah: KIRIM <dari> <ke> <kode> <jumlah>, PROSES_KIRIM
+                # RUTE_MURAH <dari> <ke>, CEK_STOK <kode>
+                # KADALUARSA <maks_hari>, LAPORAN_DISTRIBUSI, KELUAR
+
+            (Attachment "FULL REMAKE MODULES.png")
+
+            (Prompt Text)
+                dari gambar itu penjelasan setiap module di arsitektur pipeline 10.3 dengan parameter yang ada dari 10.2 dan kodingan di atas itu kerangka utama untuk elu bagi2 jadi banyak modul yang ada di arsitektur pipeline, coba lu buatin buat gw per modulenya itu jadiin 1 file dengan nama yang sesuai dengan nama modulenya misal file pertama untuk "Graph Rantai Pasok" lu jadiin "graph-rantai-pasok.py" dan sama untuk 5 file sisanya. kalo lu masih butuh lebih banyak detail, langsung aja tanya
+
+        [AI RESPONSE]
+
+            # src/modules/graph_rantai_pasok.py
+            ```python
+            class EdgeNode:
+                def __init__(self, dest, jarak_km, biaya_per_km):
+                    self.dest = dest
+                    self.jarak_km = jarak_km
+                    self.biaya_per_km = biaya_per_km
+                    self.next = None
+
+
+            class GraphRantaiPasok:
+                def __init__(self):
+                    self.adj = {}
+                    self.tipe_node = {}
+
+                def tambah_node(self, node_id, tipe):
+                    if node_id not in self.adj:
+                        self.adj[node_id] = None
+                        self.tipe_node[node_id] = tipe
+
+                def tambah_jalur(self, u, v, jarak, biaya_km):
+                    edge_uv = EdgeNode(v, jarak, biaya_km)
+                    edge_uv.next = self.adj[u]
+                    self.adj[u] = edge_uv
+
+                    edge_vu = EdgeNode(u, jarak, biaya_km)
+                    edge_vu.next = self.adj[v]
+                    self.adj[v] = edge_vu
+
+                def tetangga(self, u):
+                    hasil = []
+                    curr = self.adj.get(u)
+
+                    while curr:
+                        hasil.append({
+                            'tujuan': curr.dest,
+                            'jarak_km': curr.jarak_km,
+                            'biaya_per_km': curr.biaya_per_km,
+                            'total_biaya': curr.jarak_km * curr.biaya_per_km
+                        })
+                        curr = curr.next
+
+                    return hasil
+
+                def dfs(self, start, visited=None):
+                    if visited is None:
+                        visited = set()
+
+                    visited.add(start)
+                    print(start, end=' ')
+
+                    curr = self.adj[start]
+                    while curr:
+                        if curr.dest not in visited:
+                            self.dfs(curr.dest, visited)
+                        curr = curr.next
+
+                def bfs(self, start):
+                    visited = set()
+                    queue = [start]
+                    visited.add(start)
+
+                    while queue:
+                        node = queue.pop(0)
+                        print(node, end=' ')
+
+                        curr = self.adj[node]
+                        while curr:
+                            if curr.dest not in visited:
+                                visited.add(curr.dest)
+                                queue.append(curr.dest)
+                            curr = curr.next
+            ```
+
+            ---
+
+            # src/modules/circular_queue_buffer_gudang.py
+            ```python
+            class CircularQueue:
+                def __init__(self, kapasitas=50):
+                    self.kapasitas = kapasitas
+                    self.buffer = [None] * kapasitas
+                    self.front = 0
+                    self.rear = 0
+                    self._size = 0
+
+                def enqueue(self, produk):
+                    if self.is_full():
+                        return False
+
+                    self.buffer[self.rear] = produk
+                    self.rear = (self.rear + 1) % self.kapasitas
+                    self._size += 1
+                    return True
+
+                def dequeue(self):
+                    if self.is_empty():
+                        return None
+
+                    data = self.buffer[self.front]
+                    self.buffer[self.front] = None
+                    self.front = (self.front + 1) % self.kapasitas
+                    self._size -= 1
+
+                    return data
+
+                def peek(self):
+                    if self.is_empty():
+                        return None
+
+                    return self.buffer[self.front]
+
+                def is_full(self):
+                    return self._size == self.kapasitas
+
+                def is_empty(self):
+                    return self._size == 0
+
+                def tampilkan_buffer(self):
+                    if self.is_empty():
+                        print('Buffer kosong')
+                        return
+
+                    idx = self.front
+                    for _ in range(self._size):
+                        print(self.buffer[idx])
+                        idx = (idx + 1) % self.kapasitas
+
+                def __len__(self):
+                    return self._size
+            ```
+
+            ---
+
+            # src/modules/priority_queue_pengiriman.py
+            ```python
+            class NodePQ:
+                def __init__(self, data):
+                    self.data = data
+                    self.next = None
+
+
+            class PriorityQueueKirim:
+                def __init__(self):
+                    self.head = None
+                    self._size = 0
+
+                def enqueue(self, pengiriman):
+                    new_node = NodePQ(pengiriman)
+
+                    if self.head is None:
+                        self.head = new_node
+
+                    elif pengiriman.prioritas < self.head.data.prioritas:
+                        new_node.next = self.head
+                        self.head = new_node
+
+                    else:
+                        curr = self.head
+
+                        while (
+                            curr.next and
+                            curr.next.data.prioritas <= pengiriman.prioritas
+                        ):
+                            curr = curr.next
+
+                        new_node.next = curr.next
+                        curr.next = new_node
+
+                    self._size += 1
+
+                def dequeue(self):
+                    if self.head is None:
+                        return None
+
+                    removed = self.head.data
+                    self.head = self.head.next
+                    self._size -= 1
+
+                    return removed
+
+                def peek(self):
+                    if self.head:
+                        return self.head.data
+                    return None
+
+                def tampilkan_antrian(self):
+                    curr = self.head
+
+                    while curr:
+                        data = curr.data
+                        print(
+                            f'{data.pengiriman_id} | '
+                            f'{data.kode_produk} | '
+                            f'Prioritas {data.prioritas}'
+                        )
+                        curr = curr.next
+
+                def __len__(self):
+                    return self._size
+            ```
+
+            ---
+
+            # src/modules/bst_katalog_produk.py
+            ```python
+            class BSTNodeProd:
+                def __init__(self, produk):
+                    self.produk = produk
+                    self.left = None
+                    self.right = None
+
+
+            class BSTKatalog:
+                def __init__(self):
+                    self.root = None
+
+                def insert(self, produk):
+                    self.root = self._insert_recursive(self.root, produk)
+
+                def _insert_recursive(self, node, produk):
+                    if node is None:
+                        return BSTNodeProd(produk)
+
+                    if produk.kode < node.produk.kode:
+                        node.left = self._insert_recursive(node.left, produk)
+                    else:
+                        node.right = self._insert_recursive(node.right, produk)
+
+                    return node
+
+                def search(self, kode):
+                    return self._search_recursive(self.root, kode)
+
+                def _search_recursive(self, node, kode):
+                    if node is None:
+                        return None
+
+                    if kode == node.produk.kode:
+                        return node.produk
+
+                    if kode < node.produk.kode:
+                        return self._search_recursive(node.left, kode)
+
+                    return self._search_recursive(node.right, kode)
+
+                def update_stok(self, kode, delta):
+                    produk = self.search(kode)
+
+                    if produk:
+                        produk.stok += delta
+                        return True
+
+                    return False
+
+                def filter_kadaluarsa(self, maks_hari):
+                    hasil = []
+                    self._filter_recursive(self.root, maks_hari, hasil)
+                    return hasil
+
+                def _filter_recursive(self, node, maks_hari, hasil):
+                    if node:
+                        self._filter_recursive(node.left, maks_hari, hasil)
+
+                        if node.produk.masa_kadaluarsa_hari <= maks_hari:
+                            hasil.append(node.produk)
+
+                        self._filter_recursive(node.right, maks_hari, hasil)
+
+                def inorder(self):
+                    hasil = []
+                    self._inorder_recursive(self.root, hasil)
+                    return hasil
+
+                def _inorder_recursive(self, node, hasil):
+                    if node:
+                        self._inorder_recursive(node.left, hasil)
+                        hasil.append(node.produk)
+                        self._inorder_recursive(node.right, hasil)
+            ```
+
+            ---
+
+            # src/modules/dijkstra_biaya_minimum.py
+            ```python
+            def dijkstra_biaya(graph, asal):
+                INF = float('inf')
+
+                dist = {v: INF for v in graph.adj}
+                parent = {v: None for v in graph.adj}
+
+                dist[asal] = 0
+                visited = set()
+
+                while len(visited) < len(graph.adj):
+                    min_node = None
+                    min_dist = INF
+
+                    for node in graph.adj:
+                        if node not in visited and dist[node] < min_dist:
+                            min_dist = dist[node]
+                            min_node = node
+
+                    if min_node is None:
+                        break
+
+                    visited.add(min_node)
+
+                    curr = graph.adj[min_node]
+
+                    while curr:
+                        biaya = curr.jarak_km * curr.biaya_per_km
+                        new_dist = dist[min_node] + biaya
+
+                        if new_dist < dist[curr.dest]:
+                            dist[curr.dest] = new_dist
+                            parent[curr.dest] = min_node
+
+                        curr = curr.next
+
+                return dist, parent
+
+
+            def reconstruct_path(parent, tujuan):
+                path = []
+                curr = tujuan
+
+                while curr:
+                    path.append(curr)
+                    curr = parent[curr]
+
+                path.reverse()
+                return path
+            ```
+
+            ---
+
+            # src/modules/cli_rantai_pasok.py
+            ```python
+            import time
+            from dataclasses import dataclass
+
+            from modules.graph_rantai_pasok import GraphRantaiPasok
+            from modules.circular_queue_buffer_gudang import CircularQueue
+            from modules.priority_queue_pengiriman import PriorityQueueKirim
+            from modules.bst_katalog_produk import BSTKatalog
+            from modules.dijkstra_biaya_minimum import dijkstra_biaya, reconstruct_path
+
+
+            @dataclass
+            class Produk:
+                kode: str
+                nama: str
+                kategori: str
+                harga_satuan: float
+                stok: int
+                masa_kadaluarsa_hari: int
+
+
+            @dataclass
+            class Pengiriman:
+                pengiriman_id: int
+                dari_node: str
+                ke_node: str
+                kode_produk: str
+                jumlah: int
+                prioritas: int
+                waktu_kirim: float
+
+
+            class StackNode:
+                def __init__(self, data):
+                    self.data = data
+                    self.next = None
+
+
+            class Stack:
+                def __init__(self):
+                    self.top = None
+
+                def push(self, data):
+                    new_node = StackNode(data)
+                    new_node.next = self.top
+                    self.top = new_node
+
+                def pop(self):
+                    if self.top is None:
+                        return None
+
+                    data = self.top.data
+                    self.top = self.top.next
+                    return data
+
+
+            class SupplyChainCLI:
+                def __init__(self):
+                    self.graph = GraphRantaiPasok()
+                    self.bst = BSTKatalog()
+                    self.pq = PriorityQueueKirim()
+                    self.log = Stack()
+                    self.buffer = {}
+                    self.counter = 1
+
+                def tambah_node_awal(self):
+                    data_node = [
+                        ('PTN01', 'PETANI'),
+                        ('DST01', 'DISTRIBUTOR'),
+                        ('PSR01', 'PASAR'),
+                        ('GDG01', 'GUDANG')
+                    ]
+
+                    for node, tipe in data_node:
+                        self.graph.tambah_node(node, tipe)
+                        self.buffer[node] = CircularQueue(50)
+
+                    self.graph.tambah_jalur('PTN01', 'DST01', 20, 3000)
+                    self.graph.tambah_jalur('DST01', 'PSR01', 15, 2500)
+                    self.graph.tambah_jalur('DST01', 'GDG01', 10, 2000)
+
+                def tambah_produk_awal(self):
+                    data_produk = [
+                        Produk('PRD-001', 'Beras', 'BAHAN_POKOK', 15000, 100, 30),
+                        Produk('PRD-002', 'Cabai', 'SAYUR', 40000, 50, 3),
+                        Produk('PRD-003', 'Tomat', 'SAYUR', 10000, 70, 5)
+                    ]
+
+                    for produk in data_produk:
+                        self.bst.insert(produk)
+
+                def kirim_produk(self, dari, ke, kode, jumlah):
+                    produk = self.bst.search(kode)
+
+                    if produk is None:
+                        print('Produk tidak ditemukan')
+                        return
+
+                    if produk.stok < jumlah:
+                        print('Stok tidak cukup')
+                        return
+
+                    prioritas = 1 if produk.masa_kadaluarsa_hari <= 3 else 2
+
+                    pengiriman = Pengiriman(
+                        self.counter,
+                        dari,
+                        ke,
+                        kode,
+                        jumlah,
+                        prioritas,
+                        time.time()
+                    )
+
+                    self.pq.enqueue(pengiriman)
+                    self.counter += 1
+
+                    print('Pengiriman masuk antrian')
+
+                def proses_pengiriman(self):
+                    data = self.pq.dequeue()
+
+                    if data is None:
+                        print('Antrian kosong')
+                        return
+
+                    produk = self.bst.search(data.kode_produk)
+
+                    if produk:
+                        produk.stok -= data.jumlah
+                        self.buffer[data.ke_node].enqueue(produk.nama)
+                        self.log.push(data)
+
+                    print(f'Pengiriman {data.pengiriman_id} diproses')
+
+                def cek_stok(self, kode):
+                    produk = self.bst.search(kode)
+
+                    if produk:
+                        print(vars(produk))
+                    else:
+                        print('Produk tidak ditemukan')
+
+                def rute_murah(self, asal, tujuan):
+                    dist, parent = dijkstra_biaya(self.graph, asal)
+                    path = reconstruct_path(parent, tujuan)
+
+                    print(' -> '.join(path))
+                    print(f'Total biaya: {dist[tujuan]}')
+
+                def produk_kadaluarsa(self, maks_hari):
+                    hasil = self.bst.filter_kadaluarsa(maks_hari)
+
+                    for item in hasil:
+                        print(vars(item))
+
+                def laporan_distribusi(self):
+                    top = self.log.top
+
+                    while top:
+                        data = top.data
+                        print(
+                            f'{data.pengiriman_id} | '
+                            f'{data.kode_produk} | '
+                            f'{data.dari_node} -> {data.ke_node}'
+                        )
+                        top = top.next
+
+                def run(self):
+                    self.tambah_node_awal()
+                    self.tambah_produk_awal()
+
+                    print('Food Supply Chain System')
+                    print('Ketik BANTUAN untuk melihat perintah')
+
+                    while True:
+                        cmd = input('>> ').split()
+
+                        if not cmd:
+                            continue
+
+                        if cmd[0] == 'BANTUAN':
+                            print('KIRIM <dari> <ke> <kode> <jumlah>')
+                            print('PROSES_KIRIM')
+                            print('RUTE_MURAH <dari> <ke>')
+                            print('CEK_STOK <kode>')
+                            print('KADALUARSA <maks_hari>')
+                            print('LAPORAN_DISTRIBUSI')
+                            print('KELUAR')
+
+                        elif cmd[0] == 'KIRIM':
+                            self.kirim_produk(
+                                cmd[1],
+                                cmd[2],
+                                cmd[3],
+                                int(cmd[4])
+                            )
+
+                        elif cmd[0] == 'PROSES_KIRIM':
+                            self.proses_pengiriman()
+
+                        elif cmd[0] == 'RUTE_MURAH':
+                            self.rute_murah(cmd[1], cmd[2])
+
+                        elif cmd[0] == 'CEK_STOK':
+                            self.cek_stok(cmd[1])
+
+                        elif cmd[0] == 'KADALUARSA':
+                            self.produk_kadaluarsa(int(cmd[1]))
+
+                        elif cmd[0] == 'LAPORAN_DISTRIBUSI':
+                            self.laporan_distribusi()
+
+                        elif cmd[0] == 'KELUAR':
+                            print('Program selesai')
+                            break
+
+                        else:
+                            print('Perintah tidak dikenali')
+
+
+            if __name__ == '__main__':
+                app = SupplyChainCLI()
+                app.run()
+            ```
+
+            ---
+
+            # src/main.py
+            ```python
+            from modules.cli_rantai_pasok import SupplyChainCLI
+
+
+            if __name__ == '__main__':
+                app = SupplyChainCLI()
+                app.run()
+            ```
+    {PROMPT - TEST FILES CREATE}
+
+        (Prompt Text)
+
+            ok thx bat outputnya, skrng gw butuh cara run buat ngetest file per modul, untuk ngetestnya gw pengen bikin file baru "test_module", misal file testing untuk file "graph_rantai_pasok.py" itu "test_graph_rantai_pasok.py", yg isinya itu import content file yg ingin ditest terus lakukan test di test file itu sendiri, butuh detail lebih g ?
         
-    for _ in range(12):
-        i, j = rng.choice(n, 2, replace=False)
-        edges.append((nodes[i][0], nodes[j][0], int(rng.integers(5,200)), round(float(rng.uniform(500,3000)),0)))
-        
-    nama_p = ['Beras','Cabai','Tomat','Ayam','Ikan Lele','Kangkung','Wortel','Kentang','Telur','Tahu','Tempe','Minyak']
-    produk = []
-    for i, nm in enumerate(nama_p):
-        produk.append(Produk(
-            f'PRD-{i:03d}', 
-            nm, 
-            random.choice(KATEGORI_PRODUK),
-            round(random.uniform(2000,50000),-2),
-            random.randint(50,500), 
-            random.randint(1,30)
-        ))
-    return nodes, edges, produk
+    {AI RESPONSE}
 
-def main():
-    graph = GraphRantaiPasok()
-    bst_katalog = BSTKatalog()
-    pq_kirim = PriorityQueueKirim()
-    log_transaksi = Stack()
-    buffer_gudang = {}
-    kirim_counter = 0
-    
-    nodes, edges, produk_list = generate_rantai_pasok(seed=61)
-    
-    for nid, tipe in nodes:
-        graph.tambah_node(nid, tipe)
-        buffer_gudang[nid] = CircularQueue(kapasitas=50)
-        
-    for u, v, j, b in edges:
-        graph.tambah_jalur(u, v, j, b)
-        
-    for p in produk_list:
-        bst_katalog.insert(p)
-        
-    print('Food Supply Chain System Ketik BANTUAN untuk daftar perintah')
-    # TODO: implementasikan loop CLI
-    # Perintah: KIRIM <dari> <ke> <kode> <jumlah>, PROSES_KIRIM
-    # RUTE_MURAH <dari> <ke>, CEK_STOK <kode>
-    # KADALUARSA <maks_hari>, LAPORAN_DISTRIBUSI, KELUAR
-(Prompt Text)
-dari gambar itu penjelasan setiap module di arsitektur pipeline 10.3 dengan parameter yang ada dari 10.2 dan kodingan di atas itu kerangka utama untuk elu bagi2 jadi banyak modul yang ada di arsitektur pipeline, coba lu buatin buat gw per modulenya itu jadiin 1 file dengan nama yang sesuai dengan nama modulenya misal file pertama untuk "Graph Rantai Pasok" lu jadiin "graph-rantai-pasok.py" dan sama untuk 5 file sisanya. kalo lu masih butuh lebih banyak detail, langsung aja tanya
+        Nggak perlu detail tambahan. Struktur yang lu mau udah jelas. Dan itu emang cara yang bener buat ngetest modular project kayak gini.
 
-AI RESPONSE :
+        Yang lu harus sadarin sekarang:
+        kalau lu cuma bikin modul tapi gak pernah ngetest isolated per file, pas integrasi CLI nanti lu bakal bingung errornya asal dari mana. Jadi langkah lu ini udah tepat.
 
-# src/modules/graph_rantai_pasok.py
-```python
-class EdgeNode:
-    def __init__(self, dest, jarak_km, biaya_per_km):
-        self.dest = dest
-        self.jarak_km = jarak_km
-        self.biaya_per_km = biaya_per_km
-        self.next = None
+        Struktur yang gue saranin:
 
+        tbp-asd-kelompok-XX/
+        │
+        ├── src/
+        │   ├── modules/
+        │   │   ├── graph_rantai_pasok.py
+        │   │   ├── circular_queue_buffer_gudang.py
+        │   │   ├── priority_queue_pengiriman.py
+        │   │   ├── bst_katalog_produk.py
+        │   │   ├── dijkstra_biaya_minimum.py
+        │   │   └── cli_rantai_pasok.py
+        │
+        ├── test_module/
+        │   ├── test_graph_rantai_pasok.py
+        │   ├── test_circular_queue_buffer_gudang.py
+        │   ├── test_priority_queue_pengiriman.py
+        │   ├── test_bst_katalog_produk.py
+        │   ├── test_dijkstra_biaya_minimum.py
+        │   └── test_cli_rantai_pasok.py
 
-class GraphRantaiPasok:
-    def __init__(self):
-        self.adj = {}
-        self.tipe_node = {}
+        Yang sering bikin orang gagal:
+        Python gak otomatis ngerti folder src/.
 
-    def tambah_node(self, node_id, tipe):
-        if node_id not in self.adj:
-            self.adj[node_id] = None
-            self.tipe_node[node_id] = tipe
+        Jadi di tiap file test, lu harus tambahin:
 
-    def tambah_jalur(self, u, v, jarak, biaya_km):
-        edge_uv = EdgeNode(v, jarak, biaya_km)
-        edge_uv.next = self.adj[u]
-        self.adj[u] = edge_uv
+        import sys
+        import os
 
-        edge_vu = EdgeNode(u, jarak, biaya_km)
-        edge_vu.next = self.adj[v]
-        self.adj[v] = edge_vu
-
-    def tetangga(self, u):
-        hasil = []
-        curr = self.adj.get(u)
-
-        while curr:
-            hasil.append({
-                'tujuan': curr.dest,
-                'jarak_km': curr.jarak_km,
-                'biaya_per_km': curr.biaya_per_km,
-                'total_biaya': curr.jarak_km * curr.biaya_per_km
-            })
-            curr = curr.next
-
-        return hasil
-
-    def dfs(self, start, visited=None):
-        if visited is None:
-            visited = set()
-
-        visited.add(start)
-        print(start, end=' ')
-
-        curr = self.adj[start]
-        while curr:
-            if curr.dest not in visited:
-                self.dfs(curr.dest, visited)
-            curr = curr.next
-
-    def bfs(self, start):
-        visited = set()
-        queue = [start]
-        visited.add(start)
-
-        while queue:
-            node = queue.pop(0)
-            print(node, end=' ')
-
-            curr = self.adj[node]
-            while curr:
-                if curr.dest not in visited:
-                    visited.add(curr.dest)
-                    queue.append(curr.dest)
-                curr = curr.next
-```
-
----
-
-# src/modules/circular_queue_buffer_gudang.py
-```python
-class CircularQueue:
-    def __init__(self, kapasitas=50):
-        self.kapasitas = kapasitas
-        self.buffer = [None] * kapasitas
-        self.front = 0
-        self.rear = 0
-        self._size = 0
-
-    def enqueue(self, produk):
-        if self.is_full():
-            return False
-
-        self.buffer[self.rear] = produk
-        self.rear = (self.rear + 1) % self.kapasitas
-        self._size += 1
-        return True
-
-    def dequeue(self):
-        if self.is_empty():
-            return None
-
-        data = self.buffer[self.front]
-        self.buffer[self.front] = None
-        self.front = (self.front + 1) % self.kapasitas
-        self._size -= 1
-
-        return data
-
-    def peek(self):
-        if self.is_empty():
-            return None
-
-        return self.buffer[self.front]
-
-    def is_full(self):
-        return self._size == self.kapasitas
-
-    def is_empty(self):
-        return self._size == 0
-
-    def tampilkan_buffer(self):
-        if self.is_empty():
-            print('Buffer kosong')
-            return
-
-        idx = self.front
-        for _ in range(self._size):
-            print(self.buffer[idx])
-            idx = (idx + 1) % self.kapasitas
-
-    def __len__(self):
-        return self._size
-```
-
----
-
-# src/modules/priority_queue_pengiriman.py
-```python
-class NodePQ:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-
-
-class PriorityQueueKirim:
-    def __init__(self):
-        self.head = None
-        self._size = 0
-
-    def enqueue(self, pengiriman):
-        new_node = NodePQ(pengiriman)
-
-        if self.head is None:
-            self.head = new_node
-
-        elif pengiriman.prioritas < self.head.data.prioritas:
-            new_node.next = self.head
-            self.head = new_node
-
-        else:
-            curr = self.head
-
-            while (
-                curr.next and
-                curr.next.data.prioritas <= pengiriman.prioritas
-            ):
-                curr = curr.next
-
-            new_node.next = curr.next
-            curr.next = new_node
-
-        self._size += 1
-
-    def dequeue(self):
-        if self.head is None:
-            return None
-
-        removed = self.head.data
-        self.head = self.head.next
-        self._size -= 1
-
-        return removed
-
-    def peek(self):
-        if self.head:
-            return self.head.data
-        return None
-
-    def tampilkan_antrian(self):
-        curr = self.head
-
-        while curr:
-            data = curr.data
-            print(
-                f'{data.pengiriman_id} | '
-                f'{data.kode_produk} | '
-                f'Prioritas {data.prioritas}'
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
             )
-            curr = curr.next
-
-    def __len__(self):
-        return self._size
-```
-
----
-
-# src/modules/bst_katalog_produk.py
-```python
-class BSTNodeProd:
-    def __init__(self, produk):
-        self.produk = produk
-        self.left = None
-        self.right = None
-
-
-class BSTKatalog:
-    def __init__(self):
-        self.root = None
-
-    def insert(self, produk):
-        self.root = self._insert_recursive(self.root, produk)
-
-    def _insert_recursive(self, node, produk):
-        if node is None:
-            return BSTNodeProd(produk)
-
-        if produk.kode < node.produk.kode:
-            node.left = self._insert_recursive(node.left, produk)
-        else:
-            node.right = self._insert_recursive(node.right, produk)
-
-        return node
-
-    def search(self, kode):
-        return self._search_recursive(self.root, kode)
-
-    def _search_recursive(self, node, kode):
-        if node is None:
-            return None
-
-        if kode == node.produk.kode:
-            return node.produk
-
-        if kode < node.produk.kode:
-            return self._search_recursive(node.left, kode)
-
-        return self._search_recursive(node.right, kode)
-
-    def update_stok(self, kode, delta):
-        produk = self.search(kode)
-
-        if produk:
-            produk.stok += delta
-            return True
-
-        return False
-
-    def filter_kadaluarsa(self, maks_hari):
-        hasil = []
-        self._filter_recursive(self.root, maks_hari, hasil)
-        return hasil
-
-    def _filter_recursive(self, node, maks_hari, hasil):
-        if node:
-            self._filter_recursive(node.left, maks_hari, hasil)
-
-            if node.produk.masa_kadaluarsa_hari <= maks_hari:
-                hasil.append(node.produk)
-
-            self._filter_recursive(node.right, maks_hari, hasil)
-
-    def inorder(self):
-        hasil = []
-        self._inorder_recursive(self.root, hasil)
-        return hasil
-
-    def _inorder_recursive(self, node, hasil):
-        if node:
-            self._inorder_recursive(node.left, hasil)
-            hasil.append(node.produk)
-            self._inorder_recursive(node.right, hasil)
-```
-
----
-
-# src/modules/dijkstra_biaya_minimum.py
-```python
-def dijkstra_biaya(graph, asal):
-    INF = float('inf')
-
-    dist = {v: INF for v in graph.adj}
-    parent = {v: None for v in graph.adj}
-
-    dist[asal] = 0
-    visited = set()
-
-    while len(visited) < len(graph.adj):
-        min_node = None
-        min_dist = INF
-
-        for node in graph.adj:
-            if node not in visited and dist[node] < min_dist:
-                min_dist = dist[node]
-                min_node = node
-
-        if min_node is None:
-            break
-
-        visited.add(min_node)
-
-        curr = graph.adj[min_node]
-
-        while curr:
-            biaya = curr.jarak_km * curr.biaya_per_km
-            new_dist = dist[min_node] + biaya
-
-            if new_dist < dist[curr.dest]:
-                dist[curr.dest] = new_dist
-                parent[curr.dest] = min_node
-
-            curr = curr.next
-
-    return dist, parent
-
-
-def reconstruct_path(parent, tujuan):
-    path = []
-    curr = tujuan
-
-    while curr:
-        path.append(curr)
-        curr = parent[curr]
-
-    path.reverse()
-    return path
-```
-
----
-
-# src/modules/cli_rantai_pasok.py
-```python
-import time
-from dataclasses import dataclass
-
-from modules.graph_rantai_pasok import GraphRantaiPasok
-from modules.circular_queue_buffer_gudang import CircularQueue
-from modules.priority_queue_pengiriman import PriorityQueueKirim
-from modules.bst_katalog_produk import BSTKatalog
-from modules.dijkstra_biaya_minimum import dijkstra_biaya, reconstruct_path
-
-
-@dataclass
-class Produk:
-    kode: str
-    nama: str
-    kategori: str
-    harga_satuan: float
-    stok: int
-    masa_kadaluarsa_hari: int
-
-
-@dataclass
-class Pengiriman:
-    pengiriman_id: int
-    dari_node: str
-    ke_node: str
-    kode_produk: str
-    jumlah: int
-    prioritas: int
-    waktu_kirim: float
-
-
-class StackNode:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
-
-
-class Stack:
-    def __init__(self):
-        self.top = None
-
-    def push(self, data):
-        new_node = StackNode(data)
-        new_node.next = self.top
-        self.top = new_node
-
-    def pop(self):
-        if self.top is None:
-            return None
-
-        data = self.top.data
-        self.top = self.top.next
-        return data
-
-
-class SupplyChainCLI:
-    def __init__(self):
-        self.graph = GraphRantaiPasok()
-        self.bst = BSTKatalog()
-        self.pq = PriorityQueueKirim()
-        self.log = Stack()
-        self.buffer = {}
-        self.counter = 1
-
-    def tambah_node_awal(self):
-        data_node = [
-            ('PTN01', 'PETANI'),
-            ('DST01', 'DISTRIBUTOR'),
-            ('PSR01', 'PASAR'),
-            ('GDG01', 'GUDANG')
-        ]
-
-        for node, tipe in data_node:
-            self.graph.tambah_node(node, tipe)
-            self.buffer[node] = CircularQueue(50)
-
-        self.graph.tambah_jalur('PTN01', 'DST01', 20, 3000)
-        self.graph.tambah_jalur('DST01', 'PSR01', 15, 2500)
-        self.graph.tambah_jalur('DST01', 'GDG01', 10, 2000)
-
-    def tambah_produk_awal(self):
-        data_produk = [
-            Produk('PRD-001', 'Beras', 'BAHAN_POKOK', 15000, 100, 30),
-            Produk('PRD-002', 'Cabai', 'SAYUR', 40000, 50, 3),
-            Produk('PRD-003', 'Tomat', 'SAYUR', 10000, 70, 5)
-        ]
-
-        for produk in data_produk:
-            self.bst.insert(produk)
-
-    def kirim_produk(self, dari, ke, kode, jumlah):
-        produk = self.bst.search(kode)
-
-        if produk is None:
-            print('Produk tidak ditemukan')
-            return
-
-        if produk.stok < jumlah:
-            print('Stok tidak cukup')
-            return
-
-        prioritas = 1 if produk.masa_kadaluarsa_hari <= 3 else 2
-
-        pengiriman = Pengiriman(
-            self.counter,
-            dari,
-            ke,
-            kode,
-            jumlah,
-            prioritas,
-            time.time()
         )
 
-        self.pq.enqueue(pengiriman)
-        self.counter += 1
+        Kalau nggak, import module lu bakal error terus.
 
-        print('Pengiriman masuk antrian')
+        1. test_graph_rantai_pasok.py
+        import sys
+        import os
 
-    def proses_pengiriman(self):
-        data = self.pq.dequeue()
-
-        if data is None:
-            print('Antrian kosong')
-            return
-
-        produk = self.bst.search(data.kode_produk)
-
-        if produk:
-            produk.stok -= data.jumlah
-            self.buffer[data.ke_node].enqueue(produk.nama)
-            self.log.push(data)
-
-        print(f'Pengiriman {data.pengiriman_id} diproses')
-
-    def cek_stok(self, kode):
-        produk = self.bst.search(kode)
-
-        if produk:
-            print(vars(produk))
-        else:
-            print('Produk tidak ditemukan')
-
-    def rute_murah(self, asal, tujuan):
-        dist, parent = dijkstra_biaya(self.graph, asal)
-        path = reconstruct_path(parent, tujuan)
-
-        print(' -> '.join(path))
-        print(f'Total biaya: {dist[tujuan]}')
-
-    def produk_kadaluarsa(self, maks_hari):
-        hasil = self.bst.filter_kadaluarsa(maks_hari)
-
-        for item in hasil:
-            print(vars(item))
-
-    def laporan_distribusi(self):
-        top = self.log.top
-
-        while top:
-            data = top.data
-            print(
-                f'{data.pengiriman_id} | '
-                f'{data.kode_produk} | '
-                f'{data.dari_node} -> {data.ke_node}'
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
             )
-            top = top.next
+        )
 
-    def run(self):
-        self.tambah_node_awal()
-        self.tambah_produk_awal()
+        from modules.graph_rantai_pasok import GraphRantaiPasok
 
-        print('Food Supply Chain System')
-        print('Ketik BANTUAN untuk melihat perintah')
+        graph = GraphRantaiPasok()
 
-        while True:
-            cmd = input('>> ').split()
+        graph.tambah_node('PTN01', 'PETANI')
+        graph.tambah_node('DST01', 'DISTRIBUTOR')
 
-            if not cmd:
-                continue
+        graph.tambah_jalur('PTN01', 'DST01', 25, 3000)
 
-            if cmd[0] == 'BANTUAN':
-                print('KIRIM <dari> <ke> <kode> <jumlah>')
-                print('PROSES_KIRIM')
-                print('RUTE_MURAH <dari> <ke>')
-                print('CEK_STOK <kode>')
-                print('KADALUARSA <maks_hari>')
-                print('LAPORAN_DISTRIBUSI')
-                print('KELUAR')
+        print('Tetangga PTN01:')
+        print(graph.tetangga('PTN01'))
 
-            elif cmd[0] == 'KIRIM':
-                self.kirim_produk(
-                    cmd[1],
-                    cmd[2],
-                    cmd[3],
-                    int(cmd[4])
+        print('\nDFS:')
+        graph.dfs('PTN01')
+
+        print('\n\nBFS:')
+        graph.bfs('PTN01')
+
+        Run:
+
+        python test_module/test_graph_rantai_pasok.py
+        2. test_circular_queue_buffer_gudang.py
+        import sys
+        import os
+
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
+            )
+        )
+
+        from modules.circular_queue_buffer_gudang import CircularQueue
+
+        queue = CircularQueue(3)
+
+        queue.enqueue('Beras')
+        queue.enqueue('Cabai')
+        queue.enqueue('Tomat')
+
+        print(queue.dequeue())
+        print(queue.dequeue())
+
+        queue.enqueue('Ayam')
+
+        queue.tampilkan_buffer()
+        3. test_priority_queue_pengiriman.py
+        import sys
+        import os
+        from dataclasses import dataclass
+
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
+            )
+        )
+
+        from modules.priority_queue_pengiriman import PriorityQueueKirim
+
+        @dataclass
+        class Pengiriman:
+            pengiriman_id: int
+            prioritas: int
+            kode_produk: str
+
+        pq = PriorityQueueKirim()
+
+        pq.enqueue(Pengiriman(1, 2, 'PRD-001'))
+        pq.enqueue(Pengiriman(2, 1, 'PRD-002'))
+        pq.enqueue(Pengiriman(3, 3, 'PRD-003'))
+
+        pq.tampilkan_antrian()
+
+        print('\nDiproses:')
+        print(pq.dequeue())
+        4. test_bst_katalog_produk.py
+        import sys
+        import os
+        from dataclasses import dataclass
+
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
+            )
+        )
+
+        from modules.bst_katalog_produk import BSTKatalog
+
+        @dataclass
+        class Produk:
+            kode: str
+            nama: str
+            kategori: str
+            harga_satuan: float
+            stok: int
+            masa_kadaluarsa_hari: int
+
+        bst = BSTKatalog()
+
+        bst.insert(Produk('PRD-002', 'Cabai', 'SAYUR', 20000, 100, 2))
+        bst.insert(Produk('PRD-001', 'Beras', 'POKOK', 15000, 50, 30))
+        bst.insert(Produk('PRD-003', 'Tomat', 'SAYUR', 12000, 70, 5))
+
+        print('Search:')
+        print(vars(bst.search('PRD-001')))
+
+        print('\nKadaluarsa <= 5 hari:')
+        for item in bst.filter_kadaluarsa(5):
+            print(vars(item))
+        5. test_dijkstra_biaya_minimum.py
+        import sys
+        import os
+
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
+            )
+        )
+
+        from modules.graph_rantai_pasok import GraphRantaiPasok
+        from modules.dijkstra_biaya_minimum import (
+            dijkstra_biaya,
+            reconstruct_path
+        )
+
+        graph = GraphRantaiPasok()
+
+        graph.tambah_node('A', 'PETANI')
+        graph.tambah_node('B', 'DISTRIBUTOR')
+        graph.tambah_node('C', 'PASAR')
+
+        graph.tambah_jalur('A', 'B', 10, 1000)
+        graph.tambah_jalur('B', 'C', 5, 2000)
+        graph.tambah_jalur('A', 'C', 30, 500)
+
+        dist, parent = dijkstra_biaya(graph, 'A')
+
+        print('Distance:')
+        print(dist)
+
+        print('\nPath A -> C:')
+        print(reconstruct_path(parent, 'C'))
+        6. test_cli_rantai_pasok.py
+
+        Ini sebenernya integration test mini.
+
+        import sys
+        import os
+
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
+            )
+        )
+
+        from modules.cli_rantai_pasok import SupplyChainCLI
+
+        app = SupplyChainCLI()
+
+        app.tambah_node_awal()
+        app.tambah_produk_awal()
+
+        app.cek_stok('PRD-001')
+
+        app.kirim_produk(
+            'PTN01',
+            'DST01',
+            'PRD-001',
+            10
+        )
+
+        app.proses_pengiriman()
+
+        app.laporan_distribusi()
+
+        Lu bakal pengen langsung lompat ke full CLI test. Jangan.
+
+        Urutan yang bener:
+
+        test graph
+        test queue
+        test bst
+        test priority queue
+        test dijkstra
+        baru integration test CLI
+
+        Kalau lu skip urutan ini, lu bakal debugging 5 struktur data sekaligus dalam satu error. Itu neraka.
+
+    {PROMPT - CLI_RANTAI_PASOK.PY DEBUGGING}
+
+        (Prompt Text)
+
+            (ini isi file cli rantai pasok)
+
+            import time
+            from dataclasses import dataclass
+
+            from modules.graph_rantai_pasok import GraphRantaiPasok
+            from modules.circular_queue_buffer_gudang import CircularQueue
+            from modules.priority_queue_pengiriman import PriorityQueueKirim
+            from modules.bst_katalog_produk import BSTKatalog
+            from modules.dijkstra_biaya_minimum import dijkstra_biaya, rekonstruksi_jalur
+
+            @dataclass
+            class Produk:
+                kode: str
+                nama: str
+                kategori: str
+                harga_satuan: float
+                stok: int
+                masa_kadaluarsa_hari: int
+
+
+            @dataclass
+            class Pengiriman:
+                pengiriman_id: int
+                dari_node: str
+                ke_node: str
+                kode_produk: str
+                jumlah: int
+                prioritas: int
+                waktu_kirim: float
+
+
+            class StackNode:
+                def __init__(self, data):
+                    self.data = data
+                    self.next = None
+
+
+            class Stack:
+                def __init__(self):
+                    self.top = None
+
+                def push(self, data):
+                    new_node = StackNode(data)
+                    new_node.next = self.top
+                    self.top = new_node
+
+                def pop(self):
+                    if self.top is None:
+                        return None
+
+                    data = self.top.data
+                    self.top = self.top.next
+                    return data
+
+
+            class SupplyChainCLI:
+                def __init__(self):
+                    self.graph = GraphRantaiPasok()
+                    self.bst = BSTKatalog()
+                    self.pq = PriorityQueueKirim()
+                    self.log = Stack()
+                    self.buffer = {}
+                    self.counter = 1
+
+                def tambah_node_awal(self):
+                    data_node = [
+                        ('PTN01', 'PETANI'),
+                        ('DST01', 'DISTRIBUTOR'),
+                        ('PSR01', 'PASAR'),
+                        ('GDG01', 'GUDANG')
+                    ]
+
+                    for node, tipe in data_node:
+                        self.graph.tambah_node(node, tipe)
+                        self.buffer[node] = CircularQueue(50)
+
+                    self.graph.tambah_jalur('PTN01', 'DST01', 20, 3000)
+                    self.graph.tambah_jalur('DST01', 'PSR01', 15, 2500)
+                    self.graph.tambah_jalur('DST01', 'GDG01', 10, 2000)
+
+                def tambah_produk_awal(self):
+                    data_produk = [
+                        Produk('PRD-001', 'Beras', 'BAHAN_POKOK', 15000, 100, 30),
+                        Produk('PRD-002', 'Cabai', 'SAYUR', 40000, 50, 3),
+                        Produk('PRD-003', 'Tomat', 'SAYUR', 10000, 70, 5)
+                    ]
+
+                    for produk in data_produk:
+                        self.bst.insert(produk)
+
+                def kirim_produk(self, dari, ke, kode, jumlah):
+                    produk = self.bst.search(kode)
+
+                    if produk is None:
+                        print('Produk tidak ditemukan')
+                        return
+
+                    if produk.stok < jumlah:
+                        print('Stok tidak cukup')
+                        return
+
+                    prioritas = 1 if produk.masa_kadaluarsa_hari <= 3 else 2
+
+                    pengiriman = Pengiriman(
+                        self.counter,
+                        dari,
+                        ke,
+                        kode,
+                        jumlah,
+                        prioritas,
+                        time.time()
+                    )
+
+                    self.pq.enqueue(pengiriman)
+                    self.counter += 1
+
+                    print('Pengiriman masuk antrian')
+
+                def proses_pengiriman(self):
+                    data = self.pq.dequeue()
+
+                    if data is None:
+                        print('Antrian kosong')
+                        return
+
+                    produk = self.bst.search(data.kode_produk)
+
+                    if produk:
+                        produk.stok -= data.jumlah
+                        self.buffer[data.ke_node].enqueue(produk.nama)
+                        self.log.push(data)
+
+                    print(f'Pengiriman {data.pengiriman_id} diproses')
+
+                def cek_stok(self, kode):
+                    produk = self.bst.search(kode)
+
+                    if produk:
+                        print(vars(produk))
+                    else:
+                        print('Produk tidak ditemukan')
+
+                def rute_murah(self, asal, tujuan):
+                    dist, parent = dijkstra_biaya(self.graph, asal)
+                    path = rekonstruksi_jalur(parent, tujuan)
+
+                    print(' -> '.join(path))
+                    print(f'Total biaya: {dist[tujuan]}')
+
+                def produk_kadaluarsa(self, maks_hari):
+                    hasil = self.bst.filter_kadaluarsa(maks_hari)
+
+                    for item in hasil:
+                        print(vars(item))
+
+                def laporan_distribusi(self):
+                    top = self.log.top
+
+                    while top:
+                        data = top.data
+                        print(
+                            f'{data.pengiriman_id} | '
+                            f'{data.kode_produk} | '
+                            f'{data.dari_node} -> {data.ke_node}'
+                        )
+                        top = top.next
+
+                def run(self):
+                    self.tambah_node_awal()
+                    self.tambah_produk_awal()
+
+                    print('Food Supply Chain System')
+                    print('Ketik BANTUAN untuk melihat perintah')
+
+                    while True:
+                        cmd = input('>> ').split()
+
+                        if not cmd:
+                            continue
+
+                        if cmd[0] == 'BANTUAN':
+                            print('KIRIM <dari> <ke> <kode> <jumlah>')
+                            print('PROSES_KIRIM')
+                            print('RUTE_MURAH <dari> <ke>')
+                            print('CEK_STOK <kode>')
+                            print('KADALUARSA <maks_hari>')
+                            print('LAPORAN_DISTRIBUSI')
+                            print('KELUAR')
+
+                        elif cmd[0] == 'KIRIM':
+                            self.kirim_produk(
+                                cmd[1],
+                                cmd[2],
+                                cmd[3],
+                                int(cmd[4])
+                            )
+
+                        elif cmd[0] == 'PROSES_KIRIM':
+                            self.proses_pengiriman()
+
+                        elif cmd[0] == 'RUTE_MURAH':
+                            self.rute_murah(cmd[1], cmd[2])
+
+                        elif cmd[0] == 'CEK_STOK':
+                            self.cek_stok(cmd[1])
+
+                        elif cmd[0] == 'KADALUARSA':
+                            self.produk_kadaluarsa(int(cmd[1]))
+
+                        elif cmd[0] == 'LAPORAN_DISTRIBUSI':
+                            self.laporan_distribusi()
+
+                        elif cmd[0] == 'KELUAR':
+                            print('Program selesai')
+                            break
+
+                        else:
+                            print('Perintah tidak dikenali')
+
+
+                    if __name__ == '__main__':
+                        app = SupplyChainCLI()
+                        app.run()
+
+            setelah gw otak atik, pas gw run outputnya kyk gini, ini salah dimana ? tolong jangan ngabisin token doang	
+                
+            File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\src\modules\cli_rantai_pasok.py", line 4, in <module>
+            from modules.graph_rantai_pasok import GraphRantaiPasok
+            ModuleNotFoundError: No module named 'modules'
+        
+    {AI RESPONSE}
+
+        Karena lu nge-run file cli_rantai_pasok.py langsung.
+
+        Pas Python ngejalanin:
+
+        python cli_rantai_pasok.py
+
+        dia nganggep file itu sebagai root, jadi package modules gak ada.
+
+        Makanya error:
+
+        from modules.graph_rantai_pasok import GraphRantaiPasok
+        ModuleNotFoundError: No module named 'modules'
+
+        Fix paling simpel:
+
+        JANGAN run file di dalam modules
+
+        Jangan ini:
+
+        python src/modules/cli_rantai_pasok.py
+        Yang bener
+
+        Bikin main.py di src/
+
+        isi:
+
+        from modules.cli_rantai_pasok import SupplyChainCLI
+
+        app = SupplyChainCLI()
+        app.run()
+
+        Terus run dari ROOT PROJECT:
+
+        python src/main.py
+
+        BUKAN dari folder modules.
+
+        Alternatif lain kalau mau tetep ngetest dari tests/:
+
+        di test file:
+
+        from modules.cli_rantai_pasok import SupplyChainCLI
+
+        dan append path ke src udah bener.
+
+        Intinya:
+
+        modules.xxx cuma works kalau src ada di PYTHONPATH
+        sekarang lu jalanin file dari dalam modules, jadi parent src gak kebaca
+
+        Ini bukan bug coding DS&A lu.
+        Ini murni Python import system.
+
+    {PROMPT - CREATE BENCHMARK}
+        
+        ok sekarang gw mau lu buat refresh memory lu dari code yg udh lu buat, kelar itu gw minta file benchmark
+
+    {AI RESPONSE}
+
+        # experiments/benchmark.py
+        ```python
+        import sys
+        import os
+        import time
+        import random
+
+        sys.path.append(
+            os.path.abspath(
+                os.path.join(os.path.dirname(__file__), '../src')
+            )
+        )
+
+        from modules.graph_rantai_pasok import GraphRantaiPasok
+        from modules.circular_queue_buffer_gudang import CircularQueue
+        from modules.priority_queue_pengiriman import PriorityQueueKirim
+        from modules.bst_katalog_produk import BSTKatalog
+        from modules.dijkstra_biaya_minimum import dijkstra_biaya
+
+        from dataclasses import dataclass
+
+
+        @dataclass
+        class Produk:
+            kode: str
+            nama: str
+            kategori: str
+            harga_satuan: float
+            stok: int
+            masa_kadaluarsa_hari: int
+
+
+        @dataclass
+        class Pengiriman:
+            pengiriman_id: int
+            prioritas: int
+            kode_produk: str
+
+
+        print('=' * 50)
+        print('BENCHMARK FOOD SUPPLY CHAIN SYSTEM')
+        print('=' * 50)
+
+
+        # ==================================================
+        # BENCHMARK GRAPH
+        # ==================================================
+
+        print('
+        [1] Benchmark GraphRantaiPasok')
+
+        graph = GraphRantaiPasok()
+
+        jumlah_node = 500
+        jumlah_edge = 1000
+
+        start = time.perf_counter()
+
+        for i in range(jumlah_node):
+            graph.tambah_node(f'N{i}', 'DISTRIBUTOR')
+
+        for _ in range(jumlah_edge):
+            u = f'N{random.randint(0, jumlah_node - 1)}'
+            v = f'N{random.randint(0, jumlah_node - 1)}'
+
+            if u != v:
+                graph.tambah_jalur(
+                    u,
+                    v,
+                    random.randint(1, 100),
+                    random.randint(500, 3000)
                 )
 
-            elif cmd[0] == 'PROSES_KIRIM':
-                self.proses_pengiriman()
+        end = time.perf_counter()
 
-            elif cmd[0] == 'RUTE_MURAH':
-                self.rute_murah(cmd[1], cmd[2])
-
-            elif cmd[0] == 'CEK_STOK':
-                self.cek_stok(cmd[1])
-
-            elif cmd[0] == 'KADALUARSA':
-                self.produk_kadaluarsa(int(cmd[1]))
-
-            elif cmd[0] == 'LAPORAN_DISTRIBUSI':
-                self.laporan_distribusi()
-
-            elif cmd[0] == 'KELUAR':
-                print('Program selesai')
-                break
-
-            else:
-                print('Perintah tidak dikenali')
+        print(f'Total node  : {jumlah_node}')
+        print(f'Total edge  : {jumlah_edge}')
+        print(f'Runtime     : {(end - start):.6f} detik')
 
 
-if __name__ == '__main__':
-    app = SupplyChainCLI()
-    app.run()
-```
+        # ==================================================
+        # BENCHMARK CIRCULAR QUEUE
+        # ==================================================
 
----
+        print('
+        [2] Benchmark CircularQueue')
 
-# src/main.py
-```python
-from modules.cli_rantai_pasok import SupplyChainCLI
+        queue = CircularQueue(10000)
+
+        start = time.perf_counter()
+
+        for i in range(10000):
+            queue.enqueue(f'Produk-{i}')
+
+        for i in range(10000):
+            queue.dequeue()
+
+        end = time.perf_counter()
+
+        print('10000 enqueue + dequeue selesai')
+        print(f'Runtime : {(end - start):.6f} detik')
 
 
-if __name__ == '__main__':
-    app = SupplyChainCLI()
-    app.run()
-```
+        # ==================================================
+        # BENCHMARK PRIORITY QUEUE
+        # ==================================================
+
+        print('
+        [3] Benchmark PriorityQueueKirim')
+
+        pq = PriorityQueueKirim()
+
+        start = time.perf_counter()
+
+        for i in range(5000):
+            pq.enqueue(
+                Pengiriman(
+                    i,
+                    random.randint(1, 3),
+                    f'PRD-{i}'
+                )
+            )
+
+        while len(pq) > 0:
+            pq.dequeue()
+
+        end = time.perf_counter()
+
+        print('5000 enqueue + dequeue selesai')
+        print(f'Runtime : {(end - start):.6f} detik')
 
 
+        # ==================================================
+        # BENCHMARK BST
+        # ==================================================
 
+        print('
+        [4] Benchmark BSTKatalog')
+
+        bst = BSTKatalog()
+
+        start = time.perf_counter()
+
+        for i in range(5000):
+            bst.insert(
+                Produk(
+                    f'PRD-{i:05d}',
+                    f'Produk-{i}',
+                    'SAYUR',
+                    10000,
+                    100,
+                    random.randint(1, 30)
+                )
+            )
+
+        for i in range(5000):
+            bst.search(f'PRD-{i:05d}')
+
+        end = time.perf_counter()
+
+        print('5000 insert + search selesai')
+        print(f'Runtime : {(end - start):.6f} detik')
+
+
+        # ==================================================
+        # BENCHMARK DIJKSTRA
+        # ==================================================
+
+        print('[5] Benchmark Dijkstra')
+
+        start = time.perf_counter()
+
+        result = dijkstra_biaya(graph, 'N0')
+
+        end = time.perf_counter()
+
+        print('Dijkstra selesai dijalankan')
+        print(f'Runtime : {(end - start):.6f} detik')
+
+
+        print('
+        ' + '=' * 50)
+        print('BENCHMARK SELESAI')
+        print('=' * 50)
+        ```
+
+        ---
+
+        Cara run benchmark:
+
+        ```bash
+        python experiments/benchmark.py
+        ```
+
+    {PROMPT - BENCHMARK DEBUGGING}
+
+        (Prompt Text - 1)
+
+            import sys
+            import os
+            import time
+            import random
+
+            sys.path.append(
+                os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), '../src')
+                )
+            )
+
+            from modules.graph_rantai_pasok import GraphRantaiPasok
+            from modules.circular_queue_buffer_gudang import CircularQueue
+            from modules.priority_queue_pengiriman import PriorityQueueKirim
+            from modules.bst_katalog_produk import BSTKatalog
+            from modules.dijkstra_biaya_minimum import dijkstra_biaya
+
+            from dataclasses import dataclass
+
+
+            @dataclass
+            class Produk:
+                kode: str
+                nama: str
+                kategori: str
+                harga_satuan: float
+                stok: int
+                masa_kadaluarsa_hari: int
+
+
+            @dataclass
+            class Pengiriman:
+                pengiriman_id: int
+                prioritas: int
+                kode_produk: str
+
+
+            print('=' * 50)
+            print('BENCHMARK FOOD SUPPLY CHAIN SYSTEM')
+            print('=' * 50)
+
+
+            # ==================================================
+            # BENCHMARK GRAPH
+            # ==================================================
+
+            print('[1] Benchmark GraphRantaiPasok')
+
+            graph = GraphRantaiPasok()
+
+            jumlah_node = 500
+            jumlah_edge = 1000
+
+            start = time.perf_counter()
+
+            for i in range(jumlah_node):
+                graph.tambah_node(f'N{i}', 'DISTRIBUTOR')
+
+            for _ in range(jumlah_edge):
+                u = f'N{random.randint(0, jumlah_node - 1)}'
+                v = f'N{random.randint(0, jumlah_node - 1)}'
+
+                if u != v:
+                    graph.tambah_jalur(
+                        u,
+                        v,
+                        random.randint(1, 100),
+                        random.randint(500, 3000)
+                    )
+
+            end = time.perf_counter()
+
+            print(f'Total node  : {jumlah_node}')
+            print(f'Total edge  : {jumlah_edge}')
+            print(f'Runtime     : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK CIRCULAR QUEUE
+            # ==================================================
+
+            print('[2] Benchmark CircularQueue')
+
+            queue = CircularQueue(10000)
+
+            start = time.perf_counter()
+
+            for i in range(10000):
+                queue.enqueue(f'Produk-{i}')
+
+            for i in range(10000):
+                queue.dequeue()
+
+            end = time.perf_counter()
+
+            print('10000 enqueue + dequeue selesai')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK PRIORITY QUEUE
+            # ==================================================
+
+            print('[3] Benchmark PriorityQueueKirim')
+
+            pq = PriorityQueueKirim()
+
+            start = time.perf_counter()
+
+            for i in range(5000):
+                pq.enqueue(
+                    Pengiriman(
+                        i,
+                        random.randint(1, 3),
+                        f'PRD-{i}'
+                    )
+                )
+
+            while len(pq) > 0:
+                pq.dequeue()
+
+            end = time.perf_counter()
+
+            print('5000 enqueue + dequeue selesai')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK BST
+            # ==================================================
+
+            print('[4] Benchmark BSTKatalog')
+
+            bst = BSTKatalog()
+
+            start = time.perf_counter()
+
+            for i in range(5000):
+                bst._insert_recursive(
+                    Produk(
+                        f'PRD-{i:05d}',
+                        f'Produk-{i}',
+                        'SAYUR',
+                        10000,
+                        100,
+                        random.randint(1, 30)
+                    )
+                )
+
+            for i in range(5000):
+                bst.search(f'PRD-{i:05d}')
+
+            end = time.perf_counter()
+
+            print('5000 insert + search selesai')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK DIJKSTRA
+            # ==================================================
+
+            print('[5] Benchmark Dijkstra')
+
+            start = time.perf_counter()
+
+            result = dijkstra_biaya(graph, 'N0')
+
+            end = time.perf_counter()
+
+            print('Dijkstra selesai dijalankan')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            print('' + '=' * 50)
+            print('BENCHMARK SELESAI')
+            print('=' * 50)
+
+            outputnya jadi
+
+            & C:/Users/hnfin/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python.exe "c:/Users/hnfin/OneDrive/Documents/Mata Pelajaran 4/tpb-asd-urban-food-supply-chain-management-kel5/experiments/benchmark.py"
+            ==================================================
+            BENCHMARK FOOD SUPPLY CHAIN SYSTEM
+            ==================================================
+            [1] Benchmark GraphRantaiPasok
+            Total node  : 500
+            Total edge  : 1000
+            Runtime     : 0.010041 detik
+            [2] Benchmark CircularQueue
+            10000 enqueue + dequeue selesai
+            Runtime : 0.027028 detik
+            [3] Benchmark PriorityQueueKirim
+            5000 enqueue + dequeue selesai
+            Runtime : 1.596682 detik
+            [4] Benchmark BSTKatalog
+            Traceback (most recent call last):
+            File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\experiments\benchmark.py", line 139, in <module>
+                bst._insert_recursive(
+                ~~~~~~~~~~~~~~~~~~~~~^
+                    Produk(
+                    ^^^^^^^
+                ...<6 lines>...
+                    )
+                    ^
+                )
+                ^
+            TypeError: BSTKatalog._insert_recursive() missing 1 required positional argument: 'produk'
+
+    {AI RESPONSE - 1}
+
+        Karena lu manggil method private `_insert_recursive()` langsung, tapi argumennya kurang.
+
+        Biasanya function lu bentuknya kayak gini:
+
+        ```python
+        def _insert_recursive(self, node, produk):
+        ```
+
+        Artinya dia butuh:
+
+        1. `node`
+        2. `produk`
+
+        Tapi lu cuma kasih:
+
+        ```python
+        bst._insert_recursive(
+            Produk(...)
+        )
+        ```
+
+        jadi `produk` dianggap masuk ke parameter `node`, sementara parameter `produk` kosong → error.
+
+        ---
+
+        Yang bener:
+
+        ## Jangan panggil `_insert_recursive()` langsung
+
+        Lu udah bikin wrapper public:
+
+        ```python
+        bst.insert(produk)
+        ```
+
+        ya pake itu.
+
+        Ganti:
+
+        ```python
+        bst._insert_recursive(
+        ```
+
+        jadi:
+
+        ```python
+        bst.insert(
+        ```
+
+        ---
+
+        Jadi blok benchmark BST lu:
+
+        ```python
+        for i in range(5000):
+            bst.insert(
+                Produk(
+                    f'PRD-{i:05d}',
+                    f'Produk-{i}',
+                    'SAYUR',
+                    10000,
+                    100,
+                    random.randint(1, 30)
+                )
+            )
+        ```
+
+        ---
+
+        Lu sekarang mulai kena efek samping dari:
+
+        * modularisasi bagus
+        * tapi belum ngerti mana API public vs internal helper
+
+        Convention Python:
+
+        * `insert()` → public method
+        * `_insert_recursive()` → internal helper method
+
+        Prefix `_` itu tanda:
+
+        > “jangan dipanggil dari luar class kalau gak tau struktur internalnya”
+
+        Dan benchmark itu harus ngetest API asli user-facing, bukan helper internal.
+
+        (Prompt Text - 2)
+
+            isi benchmark py :
+
+            import sys
+            import os
+            import time
+            import random
+
+            sys.path.append(
+                os.path.abspath(
+                    os.path.join(os.path.dirname(__file__), '../src')
+                )
+            )
+
+            from modules.graph_rantai_pasok import GraphRantaiPasok
+            from modules.circular_queue_buffer_gudang import CircularQueue
+            from modules.priority_queue_pengiriman import PriorityQueueKirim
+            from modules.bst_katalog_produk import BSTKatalog
+            from modules.dijkstra_biaya_minimum import dijkstra_biaya
+
+            from dataclasses import dataclass
+
+
+            @dataclass
+            class Produk:
+                kode: str
+                nama: str
+                kategori: str
+                harga_satuan: float
+                stok: int
+                masa_kadaluarsa_hari: int
+
+
+            @dataclass
+            class Pengiriman:
+                pengiriman_id: int
+                prioritas: int
+                kode_produk: str
+
+
+            print('=' * 50)
+            print('BENCHMARK FOOD SUPPLY CHAIN SYSTEM')
+            print('=' * 50)
+
+
+            # ==================================================
+            # BENCHMARK GRAPH
+            # ==================================================
+
+            print('[1] Benchmark GraphRantaiPasok')
+
+            graph = GraphRantaiPasok()
+
+            jumlah_node = 500
+            jumlah_edge = 1000
+
+            start = time.perf_counter()
+
+            for i in range(jumlah_node):
+                graph.tambah_node(f'N{i}', 'DISTRIBUTOR')
+
+            for _ in range(jumlah_edge):
+                u = f'N{random.randint(0, jumlah_node - 1)}'
+                v = f'N{random.randint(0, jumlah_node - 1)}'
+
+                if u != v:
+                    graph.tambah_jalur(
+                        u,
+                        v,
+                        random.randint(1, 100),
+                        random.randint(500, 3000)
+                    )
+
+            end = time.perf_counter()
+
+            print(f'Total node  : {jumlah_node}')
+            print(f'Total edge  : {jumlah_edge}')
+            print(f'Runtime     : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK CIRCULAR QUEUE
+            # ==================================================
+
+            print('[2] Benchmark CircularQueue')
+
+            queue = CircularQueue(10000)
+
+            start = time.perf_counter()
+
+            for i in range(10000):
+                queue.enqueue(f'Produk-{i}')
+
+            for i in range(10000):
+                queue.dequeue()
+
+            end = time.perf_counter()
+
+            print('10000 enqueue + dequeue selesai')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK PRIORITY QUEUE
+            # ==================================================
+
+            print('[3] Benchmark PriorityQueueKirim')
+
+            pq = PriorityQueueKirim()
+
+            start = time.perf_counter()
+
+            for i in range(5000):
+                pq.enqueue(
+                    Pengiriman(
+                        i,
+                        random.randint(1, 3),
+                        f'PRD-{i}'
+                    )
+                )
+
+            while len(pq) > 0:
+                pq.dequeue()
+
+            end = time.perf_counter()
+
+            print('5000 enqueue + dequeue selesai')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK BST
+            # ==================================================
+
+            print('[4] Benchmark BSTKatalog')
+
+            bst = BSTKatalog()
+
+            start = time.perf_counter()
+
+            for i in range(5000):
+                bst._insert_recursive(
+                    Produk(
+                        f'PRD-{i:05d}',
+                        f'Produk-{i}',
+                        'SAYUR',
+                        10000,
+                        100,
+                        random.randint(1, 30)
+                    )
+                )
+
+            for i in range(5000):
+                bst.search(f'PRD-{i:05d}')
+
+            end = time.perf_counter()
+
+            print('5000 insert + search selesai')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            # ==================================================
+            # BENCHMARK DIJKSTRA
+            # ==================================================
+
+            print('[5] Benchmark Dijkstra')
+
+            start = time.perf_counter()
+
+            result = dijkstra_biaya(graph, 'N0')
+
+            end = time.perf_counter()
+
+            print('Dijkstra selesai dijalankan')
+            print(f'Runtime : {(end - start):.6f} detik')
+
+
+            print('' + '=' * 50)
+            print('BENCHMARK SELESAI')
+            print('=' * 50)
+
+            isi bst katalog produknya :
+
+            import sys
+            import os
+
+            sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+            from data_structures.node import Node
+
+            class BSTKatalog:
+                def __init__(self):
+                    self.root = None
+
+                def insert(self, produk):
+                    if self.root is None:
+                        self.root = Node(produk)
+                    else:
+                        self._insert_recursive(self.root, produk)
+
+                def _insert_recursive(self, current, produk):
+                    if produk.kode < current.data.kode:
+                        if current.left is None:
+                            current.left = Node(produk)
+                        else:
+                            self._insert_recursive(current.left, produk)
+                    elif produk.kode > current.data.kode:
+                        if current.right is None:
+                            current.right = Node(produk)
+                        else:
+                            self._insert_recursive(current.right, produk)
+
+                def search(self, kode):
+                    res = self._search_recursive(self.root, kode)
+                    return res.data if res else None
+
+                def _search_recursive(self, current, kode):
+                    if current is None or current.data.kode == kode:
+                        return current
+                    if kode < current.data.kode:
+                        return self._search_recursive(current.left, kode)
+                    return self._search_recursive(current.right, kode)
+
+                def update_stok(self, kode, delta):
+                    produk = self.search(kode)
+                    if produk:
+                        produk.stok += delta
+                        return True
+                    return False
+
+                def filter_kadaluarsa(self, current, maks_hari):
+                    if current:
+                        self.filter_kadaluarsa(current.left, maks_hari)
+                        if current.data.masa_kadaluarsa_hari <= maks_hari:
+                            print(f" > [ALERT] {current.data.nama} (Kode: {current.data.kode}) - Sisa {current.data.masa_kadaluarsa_hari} hari!")
+                        self.filter_kadaluarsa(current.right, maks_hari)
+
+                def inorder(self, current):
+                    if current:
+                        self.inorder(current.left)
+                        p = current.data
+                        print(f" > [Kode: {p.kode:3}] {p.nama:15} | Stok: {p.stok:3} | Exp: {p.masa_kadaluarsa_hari:3} hari")
+                        self.inorder(current.right)
+
+            if __name__ == "__main__":
+                from dataclasses import dataclass
+
+                @dataclass
+                class Produk:
+                    kode: str
+                    nama: str
+                    kategori: str
+                    harga_satuan: float
+                    stok: int
+                    masa_kadaluarsa_hari: int
+
+                katalog = BSTKatalog()
+                
+                print("\n" + "="*60)
+                print("SISTEM MANAGEMENT KATALOG - URBAN FOOD SUPPLY CHAIN")
+                print("KELOMPOK 5 - TEKNOLOGI ELEKTRO UNY")
+                print("="*60)
+
+                katalog.insert(Produk("105", "Cabai Merah", "SAYUR", 25000.0, 50, 5))
+                katalog.insert(Produk("101", "Beras Premium", "BAHAN_POKOK", 14000.0, 200, 180))
+                katalog.insert(Produk("110", "Tomat Organik", "SAYUR", 18000.0, 30, 3))
+                katalog.insert(Produk("103", "Daging Ayam", "DAGING", 35000.0, 15, 2))
+
+                print("\n[INFO] Daftar Katalog Produk (Urut Kode):")
+                katalog.inorder(katalog.root)
+
+                print(f"\n[SISTEM] Update stok Beras (Kode 101) +50...")
+                katalog.update_stok("101", 50)
+
+                print("\n[FILTER] Produk hampir kadaluarsa (<= 4 hari):")
+                katalog.filter_kadaluarsa(katalog.root, 4)
+
+                print("\n" + "="*60)
+
+                outputnya jadi
+
+                & C:/Users/hnfin/AppData/Roaming/uv/python/cpython-3.14.5-windows-x86_64-none/python.exe "c:/Users/hnfin/OneDrive/Documents/Mata Pelajaran 4/tpb-asd-urban-food-supply-chain-management-kel5/experiments/benchmark.py"
+                ==================================================
+                BENCHMARK FOOD SUPPLY CHAIN SYSTEM
+                ==================================================
+                [1] Benchmark GraphRantaiPasok
+                Total node  : 500
+                Total edge  : 1000
+                Runtime     : 0.006402 detik
+                [2] Benchmark CircularQueue
+                10000 enqueue + dequeue selesai
+                Runtime : 0.022262 detik
+                [3] Benchmark PriorityQueueKirim
+                5000 enqueue + dequeue selesai
+                Runtime : 1.598624 detik
+                [4] Benchmark BSTKatalog
+                Traceback (most recent call last):
+                File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\experiments\benchmark.py", line 139, in <module>
+                    bst.insert(
+                    ~~~~~~~~~~^
+                        Produk(
+                        ^^^^^^^
+                    ...<6 lines>...
+                        )
+                        ^
+                    )
+                    ^
+                File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\src\modules\bst_katalog_produk.py", line 16, in insert
+                    self._insert_recursive(self.root, produk)
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+                File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\src\modules\bst_katalog_produk.py", line 28, in _insert_recursive
+                    self._insert_recursive(current.right, produk)
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+                File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\src\modules\bst_katalog_produk.py", line 28, in _insert_recursive
+                    self._insert_recursive(current.right, produk)
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+                File "c:\Users\hnfin\OneDrive\Documents\Mata Pelajaran 4\tpb-asd-urban-food-supply-chain-management-kel5\src\modules\bst_katalog_produk.py", line 28, in _insert_recursive
+                    self._insert_recursive(current.right, produk)
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+                [Previous line repeated 995 more times]
+                RecursionError: maximum recursion depth exceeded
+
+    {AI - RESPONSE - 2}
+
+        Ini bukan bug recursion biasa.
+
+        Lu bikin BST paling worst-case possible.
+
+        Lu insert data urut:
+
+        ```python
+        PRD-00000
+        PRD-00001
+        PRD-00002
+        ...
+        ```
+
+        Akibatnya BST lu berubah jadi linked list ke kanan semua:
+
+        ```text
+        root
+        \
+        \
+            \
+            \
+        ```
+
+        Terus recursive depth Python mentok sekitar 1000.
+
+        Makanya pas 5000 insert:
+
+        ```text
+        RecursionError: maximum recursion depth exceeded
+        ```
+
+        ---
+
+        Fix paling bener:
+
+        ## Randomize insert order
+
+        Di benchmark BST:
+
+        ganti:
+
+        ```python
+        for i in range(5000):
+        ```
+
+        jadi:
+
+        ```python
+        indices = list(range(5000))
+        random.shuffle(indices)
+
+        for i in indices:
+        ```
+
+        Jadi:
+
+        ```python
+        indices = list(range(5000))
+        random.shuffle(indices)
+
+        for i in indices:
+            bst.insert(
+                Produk(
+                    f'PRD-{i:05d}',
+                    f'Produk-{i}',
+                    'SAYUR',
+                    10000,
+                    100,
+                    random.randint(1, 30)
+                )
+            )
+        ```
+
+        ---
+
+        Kenapa ini penting?
+
+        Karena:
+
+        * BST biasa TANPA balancing
+        * performa `O(log n)` cuma berlaku kalau tree relatif seimbang
+        * kalau data sorted → jadi `O(n)`
+
+        Dan benchmark lu tadi sebenernya ngebuktiin teori DS&A dengan sempurna tanpa sadar.
+
+        ---
+
+        Yang lucu:
+        lu pikir benchmark gagal.
+
+        Padahal lu baru aja mendemonstrasikan:
+
+        > “BST degenerates into linked list on sorted insertion.”
+
+        itu literally materi kuliah ASD.
