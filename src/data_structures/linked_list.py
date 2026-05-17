@@ -42,3 +42,5 @@ class LinkedList:
             print(current.data, end=" -> ")
             current = current.next
         print("None")
+
+        #lha ? g kedetect changes nya ??????
