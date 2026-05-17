@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import sys
 import os
 
@@ -52,5 +51,4 @@ def run_test():
     print(f"Uji Kosong Akhir: {st.is_empty()}")
 
 if __name__ == "__main__":
->>>>>>> da21a552cb6396e3871768eb1a2dfb6377a563a4
     run_test()

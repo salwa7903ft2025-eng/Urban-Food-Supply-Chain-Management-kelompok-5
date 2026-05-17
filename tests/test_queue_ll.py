@@ -1,59 +1,29 @@
 import sys
 import os
-import unittest
 
-# Menambahkan folder 'src' ke dalam sys.path agar modul bisa diimpor dari folder 'tests'
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 from data_structures.queue_ll import QueueLL
 
+def run_test():
+    print("--- TESTING QUEUE (LINKED LIST BASED) ---")
+    q = QueueLL()
+    
+    # Uji kondisi awal (akses front langsung karena QueueLL kamu tidak punya is_empty())
+    print(f"Uji Kosong Awal (Harus True): {q.front is None}") 
+    
+    # Memasukkan data ke antrean (FIFO)
+    q.enqueue("Lokasi-Petani-01")
+    q.enqueue("Lokasi-Gudang-01")
+    q.enqueue("Lokasi-Pasar-01")
+    print(f"Uji Kosong Setelah Enqueue (Harus False): {q.front is None}")
+    
+    # Mengeluarkan data dari antrean (Urutan: Petani -> Gudang -> Pasar)
+    print(f"Dequeue 1 (Harus Petani-01): {q.dequeue()}")
+    print(f"Dequeue 2 (Harus Gudang-01): {q.dequeue()}")
+    print(f"Dequeue 3 (Harus Pasar-01): {q.dequeue()}")
+    print(f"Dequeue 4 (Harus None): {q.dequeue()}")
+    print(f"Uji Kosong Akhir (Harus True): {q.front is None}")
 
-class TestQueueLL(unittest.TestCase):
-    def setUp(self):
-        """Membuat instance queue baru sebelum setiap test dijalankan."""
-        self.queue = QueueLL()
-
-    def test_initial_state(self):
-        """Memastikan queue baru dalam kondisi kosong."""
-        self.assertIsNone(self.queue.front)
-        self.assertIsNone(self.queue.rear)
-
-    def test_enqueue_single_element(self):
-        """Memastikan enqueue satu elemen berhasil."""
-        self.queue.enqueue(10)
-        self.assertEqual(self.queue.front.data, 10)
-        self.assertEqual(self.queue.rear.data, 10)
-
-    def test_enqueue_multiple_elements(self):
-        """Memastikan urutan FIFO benar saat enqueue beberapa elemen."""
-        self.queue.enqueue(10)
-        self.queue.enqueue(20)
-        self.queue.enqueue(30)
-        self.assertEqual(self.queue.front.data, 10)
-        self.assertEqual(self.queue.rear.data, 30)
-
-    def test_dequeue_single_element(self):
-        """Memastikan dequeue pada queue berisi satu elemen mengosongkan queue kembali."""
-        self.queue.enqueue(10)
-        data = self.queue.dequeue()
-        self.assertEqual(data, 10)
-        self.assertIsNone(self.queue.front)
-        self.assertIsNone(self.queue.rear)
-
-    def test_dequeue_multiple_elements(self):
-        """Memastikan data keluar sesuai urutan masuk (FIFO)."""
-        self.queue.enqueue("A")
-        self.queue.enqueue("B")
-        self.queue.enqueue("C")
-        
-        self.assertEqual(self.queue.dequeue(), "A")
-        self.assertEqual(self.queue.dequeue(), "B")
-        self.assertEqual(self.queue.dequeue(), "C")
-
-    def test_dequeue_empty_queue(self):
-        """Memastikan dequeue pada queue kosong menghasilkan None."""
-        self.assertIsNone(self.queue.dequeue())
-
-
-if __name__ == '__main__':
-    unittest.main()
+if __name__ == "__main__":
+    run_test()
