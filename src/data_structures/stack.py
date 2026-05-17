@@ -4,8 +4,7 @@ class Stack:
     def __init__(self):
         self.top = None  
 
-    def is_empty(self):python tests/test_stack.py
-
+    def is_empty(self):
         return self.top is None  
 
     def push(self, item):
