@@ -1,4 +1,15 @@
 class EdgeNode:
+    def __init__(self, dest, jarak_km, biaya_per_km):
+        self.dest = dest
+        self.jarak_km = jarak_km
+        self.biaya_per_km = biaya_per_km
+        self.next = None
+
+        # PERBAIKAN: Tambahkan method untuk menghitung total biaya
+
+class GraphRantaiPasok:
+    def __init__(self):
+        self.adj = {}
         self.tipe_node = {}
 
     def tambah_node(self, node_id, tipe):
