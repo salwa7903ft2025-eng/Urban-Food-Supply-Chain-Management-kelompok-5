@@ -1,328 +1,222 @@
-# NEXT TIME
 import time
+from dataclasses import dataclass
 
-from priority_queue import PriorityQueueKirim, Pengiriman
-from dijkstra_module import (
-    dijkstra_biaya,
-    rekonstruksi_jalur,
-    merge_sort_biaya
-)
+from modules.graph_rantai_pasok import GraphRantaiPasok
+from modules.circular_queue_buffer_gudang import CircularQueue
+from modules.priority_queue_pengiriman import PriorityQueueKirim
+from modules.bst_katalog_produk import BSTKatalog
+from modules.dijkstra_biaya_minimum import dijkstra_biaya, rekonstruksi_jalur
+
+@dataclass
+class Produk:
+    kode: str
+    nama: str
+    kategori: str
+    harga_satuan: float
+    stok: int
+    masa_kadaluarsa_hari: int
 
 
-class CLIRantaiPasok:
+@dataclass
+class Pengiriman:
+    pengiriman_id: int
+    dari_node: str
+    ke_node: str
+    kode_produk: str
+    jumlah: int
+    prioritas: int
+    waktu_kirim: float
 
-    def __init__(
-        self,
-        graph,
-        bst_katalog,
-        pq_kirim,
-        buffer_gudang
-    ):
 
-        self.graph = graph
-        self.bst_katalog = bst_katalog
-        self.pq_kirim = pq_kirim
-        self.buffer_gudang = buffer_gudang
+class StackNode:
+    def __init__(self, data):
+        self.data = data
+        self.next = None
 
-        self.kirim_counter = 1
-        self.audit_distribusi = []
 
-    # ==========================================
-    # KIRIM
-    # ==========================================
+class Stack:
+    def __init__(self):
+        self.top = None
 
-    def command_kirim(self, args):
+    def push(self, data):
+        new_node = StackNode(data)
+        new_node.next = self.top
+        self.top = new_node
 
-        if len(args) != 4:
-            print("Format:")
-            print("KIRIM <dari> <ke> <kode> <jumlah>")
-            return
+    def pop(self):
+        if self.top is None:
+            return None
 
-        dari, ke, kode, jumlah = args
+        data = self.top.data
+        self.top = self.top.next
+        return data
 
-        jumlah = int(jumlah)
 
-        produk = self.bst_katalog.search(kode)
+class SupplyChainCLI:
+    def __init__(self):
+        self.graph = GraphRantaiPasok()
+        self.bst = BSTKatalog()
+        self.pq = PriorityQueueKirim()
+        self.log = Stack()
+        self.buffer = {}
+        self.counter = 1
+
+    def tambah_node_awal(self):
+        data_node = [
+            ('PTN01', 'PETANI'),
+            ('DST01', 'DISTRIBUTOR'),
+            ('PSR01', 'PASAR'),
+            ('GDG01', 'GUDANG')
+        ]
+
+        for node, tipe in data_node:
+            self.graph.tambah_node(node, tipe)
+            self.buffer[node] = CircularQueue(50)
+
+        self.graph.tambah_jalur('PTN01', 'DST01', 20, 3000)
+        self.graph.tambah_jalur('DST01', 'PSR01', 15, 2500)
+        self.graph.tambah_jalur('DST01', 'GDG01', 10, 2000)
+
+    def tambah_produk_awal(self):
+        data_produk = [
+            Produk('PRD-001', 'Beras', 'BAHAN_POKOK', 15000, 100, 30),
+            Produk('PRD-002', 'Cabai', 'SAYUR', 40000, 50, 3),
+            Produk('PRD-003', 'Tomat', 'SAYUR', 10000, 70, 5)
+        ]
+
+        for produk in data_produk:
+            self.bst.insert(produk)
+
+    def kirim_produk(self, dari, ke, kode, jumlah):
+        produk = self.bst.search(kode)
 
         if produk is None:
-            print("Produk tidak ditemukan")
+            print('Produk tidak ditemukan')
             return
 
         if produk.stok < jumlah:
-            print("Stok tidak mencukupi")
+            print('Stok tidak cukup')
             return
 
-        # menentukan prioritas
-        hari = produk.masa_kadaluarsa_hari
-
-        if hari <= 3:
-            prioritas = 1
-        elif hari <= 7:
-            prioritas = 2
-        else:
-            prioritas = 3
+        prioritas = 1 if produk.masa_kadaluarsa_hari <= 3 else 2
 
         pengiriman = Pengiriman(
-            pengiriman_id=self.kirim_counter,
-            dari_node=dari,
-            ke_node=ke,
-            kode_produk=kode,
-            jumlah=jumlah,
-            prioritas=prioritas,
-            waktu_kirim=time.time()
+            self.counter,
+            dari,
+            ke,
+            kode,
+            jumlah,
+            prioritas,
+            time.time()
         )
 
-        self.pq_kirim.enqueue(pengiriman)
+        self.pq.enqueue(pengiriman)
+        self.counter += 1
 
-        self.kirim_counter += 1
+        print('Pengiriman masuk antrian')
 
-        print("Pengiriman masuk queue")
+    def proses_pengiriman(self):
+        data = self.pq.dequeue()
 
-    # ==========================================
-    # PROSES KIRIM
-    # ==========================================
-
-    def command_proses_kirim(self):
-
-        pengiriman = self.pq_kirim.dequeue()
-
-        if pengiriman is None:
-            print("Tidak ada pengiriman")
+        if data is None:
+            print('Antrian kosong')
             return
 
-        # update stok
-        self.bst_katalog.update_stok(
-            pengiriman.kode_produk,
-            -pengiriman.jumlah
-        )
+        produk = self.bst.search(data.kode_produk)
 
-        # cari rute murah
-        dist, parent = dijkstra_biaya(
-            self.graph,
-            pengiriman.dari_node
-        )
+        if produk:
+            produk.stok -= data.jumlah
+            self.buffer[data.ke_node].enqueue(produk.nama)
+            self.log.push(data)
 
-        total_biaya = dist[pengiriman.ke_node]
+        print(f'Pengiriman {data.pengiriman_id} diproses')
 
-        path = rekonstruksi_jalur(
-            parent,
-            pengiriman.ke_node
-        )
+    def cek_stok(self, kode):
+        produk = self.bst.search(kode)
 
-        self.audit_distribusi.append(
-            (
-                pengiriman.pengiriman_id,
-                total_biaya
-            )
-        )
+        if produk:
+            print(vars(produk))
+        else:
+            print('Produk tidak ditemukan')
 
-        print("\n=== PENGIRIMAN DIPROSES ===")
+    def rute_murah(self, asal, tujuan):
+        dist, parent = dijkstra_biaya(self.graph, asal)
+        path = rekonstruksi_jalur(parent, tujuan)
 
-        print(f"ID           : {pengiriman.pengiriman_id}")
-        print(f"Produk       : {pengiriman.kode_produk}")
-        print(f"Jumlah       : {pengiriman.jumlah}")
+        print(' -> '.join(path))
+        print(f'Total biaya: {dist[tujuan]}')
 
-        print(
-            f"Rute         : {' -> '.join(path)}"
-        )
+    def produk_kadaluarsa(self, maks_hari):
+        hasil = self.bst.filter_kadaluarsa(maks_hari)
 
-        print(
-            f"Total Biaya  : {total_biaya}"
-        )
+        for item in hasil:
+            print(vars(item))
 
-    # ==========================================
-    # RUTE MURAH
-    # ==========================================
+    def laporan_distribusi(self):
+        top = self.log.top
 
-    def command_rute_murah(self, args):
-
-        if len(args) != 2:
-            print("Format:")
-            print("RUTE_MURAH <dari> <ke>")
-            return
-
-        asal, tujuan = args
-
-        dist, parent = dijkstra_biaya(
-            self.graph,
-            asal
-        )
-
-        path = rekonstruksi_jalur(
-            parent,
-            tujuan
-        )
-
-        print("\n=== RUTE TERMURAH ===")
-
-        print(
-            f"Jalur : {' -> '.join(path)}"
-        )
-
-        print(
-            f"Biaya : {dist[tujuan]}"
-        )
-
-    # ==========================================
-    # CEK STOK
-    # ==========================================
-
-    def command_cek_stok(self, args):
-
-        if len(args) != 1:
-            print("Format:")
-            print("CEK_STOK <kode>")
-            return
-
-        kode = args[0]
-
-        produk = self.bst_katalog.search(kode)
-
-        if produk is None:
-            print("Produk tidak ditemukan")
-            return
-
-        print("\n=== DATA PRODUK ===")
-
-        print(f"Kode       : {produk.kode}")
-        print(f"Nama       : {produk.nama}")
-        print(f"Kategori   : {produk.kategori}")
-        print(f"Stok       : {produk.stok}")
-
-        print(
-            f"Kadaluarsa : "
-            f"{produk.masa_kadaluarsa_hari} hari"
-        )
-
-    # ==========================================
-    # KADALUARSA
-    # ==========================================
-
-    def command_kadaluarsa(self, args):
-
-        if len(args) != 1:
-            print("Format:")
-            print("KADALUARSA <maks_hari>")
-            return
-
-        maks_hari = int(args[0])
-
-        hasil = self.bst_katalog.filter_kadaluarsa(
-            maks_hari
-        )
-
-        print("\n=== PRODUK MENDEKATI KADALUARSA ===")
-
-        if len(hasil) == 0:
-            print("Tidak ada")
-            return
-
-        for p in hasil:
-
+        while top:
+            data = top.data
             print(
-                f"{p.kode} | "
-                f"{p.nama} | "
-                f"{p.masa_kadaluarsa_hari} hari"
+                f'{data.pengiriman_id} | '
+                f'{data.kode_produk} | '
+                f'{data.dari_node} -> {data.ke_node}'
             )
-
-    # ==========================================
-    # LAPORAN DISTRIBUSI
-    # ==========================================
-
-    def command_laporan(self):
-
-        if len(self.audit_distribusi) == 0:
-            print("Belum ada distribusi")
-            return
-
-        hasil_sort = merge_sort_biaya(
-            self.audit_distribusi
-        )
-
-        print("\n=== LAPORAN DISTRIBUSI ===")
-
-        for pid, biaya in hasil_sort:
-
-            print(
-                f"Pengiriman {pid} "
-                f"=> Biaya {biaya}"
-            )
-
-    # ==========================================
-    # BUFFER
-    # ==========================================
-
-    def command_buffer(self, args):
-
-        if len(args) != 1:
-            print("Format:")
-            print("BUFFER <node>")
-            return
-
-        node = args[0]
-
-        if node not in self.buffer_gudang:
-            print("Node tidak ditemukan")
-            return
-
-        buffer = self.buffer_gudang[node]
-
-        print("\n=== BUFFER GUDANG ===")
-
-        print(f"Node      : {node}")
-        print(f"Isi Buffer: {len(buffer)}")
-
-    # ==========================================
-    # LOOP CLI
-    # ==========================================
+            top = top.next
 
     def run(self):
+        self.tambah_node_awal()
+        self.tambah_produk_awal()
 
-        print("=== FOOD SUPPLY CHAIN SYSTEM ===")
-        print("Ketik KELUAR untuk berhenti")
+        print('Food Supply Chain System')
+        print('Ketik BANTUAN untuk melihat perintah')
 
         while True:
+            cmd = input('>> ').split()
 
-            command = input("\n>> ").strip()
-
-            if command == "":
+            if not cmd:
                 continue
 
-            parts = command.split()
+            if cmd[0] == 'BANTUAN':
+                print('KIRIM <dari> <ke> <kode> <jumlah>')
+                print('PROSES_KIRIM')
+                print('RUTE_MURAH <dari> <ke>')
+                print('CEK_STOK <kode>')
+                print('KADALUARSA <maks_hari>')
+                print('LAPORAN_DISTRIBUSI')
+                print('KELUAR')
 
-            cmd = parts[0].upper()
-            args = parts[1:]
+            elif cmd[0] == 'KIRIM':
+                self.kirim_produk(
+                    cmd[1],
+                    cmd[2],
+                    cmd[3],
+                    int(cmd[4])
+                )
 
-            try:
+            elif cmd[0] == 'PROSES_KIRIM':
+                self.proses_pengiriman()
 
-                if cmd == "KIRIM":
-                    self.command_kirim(args)
+            elif cmd[0] == 'RUTE_MURAH':
+                self.rute_murah(cmd[1], cmd[2])
 
-                elif cmd == "PROSES_KIRIM":
-                    self.command_proses_kirim()
+            elif cmd[0] == 'CEK_STOK':
+                self.cek_stok(cmd[1])
 
-                elif cmd == "RUTE_MURAH":
-                    self.command_rute_murah(args)
+            elif cmd[0] == 'KADALUARSA':
+                self.produk_kadaluarsa(int(cmd[1]))
 
-                elif cmd == "CEK_STOK":
-                    self.command_cek_stok(args)
+            elif cmd[0] == 'LAPORAN_DISTRIBUSI':
+                self.laporan_distribusi()
 
-                elif cmd == "KADALUARSA":
-                    self.command_kadaluarsa(args)
+            elif cmd[0] == 'KELUAR':
+                print('Program selesai')
+                break
 
-                elif cmd == "LAPORAN_DISTRIBUSI":
-                    self.command_laporan()
+            else:
+                print('Perintah tidak dikenali')
 
-                elif cmd == "BUFFER":
-                    self.command_buffer(args)
 
-                elif cmd == "KELUAR":
-
-                    print("Program selesai")
-                    break
-
-                else:
-                    print("Command tidak dikenal")
-
-            except Exception as e:
-                print(f"Error: {e}")
+if __name__ == '__main__':
+    app = SupplyChainCLI()
+    app.run()
