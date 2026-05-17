@@ -1,52 +1,48 @@
-class CircularQueue:
-    def __init__(self, kapasitas=50):
-        self.kapasitas = kapasitas
-        self.buffer = [None] * kapasitas
-        self.front = 0
-        self.rear = 0
-        self._size = 0
+class CircularQueueBuffer:
+    def __init__(self, capacity=50):
+        self.capacity = capacity
+        self.queue = [None] * capacity
+        self.head = -1
+        self.tail = -1
 
-    def enqueue(self, produk):
+    def is_full(self):
+        """Big-O: O(1)"""
+        return (self.tail + 1) % self.capacity == self.head
+
+    def is_empty(self):
+        """Big-O: O(1)"""
+        return self.head == -1
+
+    def enqueue(self, item):
+        """
+        Memasukkan produk ke buffer gudang.
+        Big-O: O(1)
+        """
         if self.is_full():
             return False
-
-        self.buffer[self.rear] = produk
-        self.rear = (self.rear + 1) % self.kapasitas
-        self._size += 1
+        
+        if self.head == -1:
+            self.head = 0
+            
+        self.tail = (self.tail + 1) % self.capacity
+        self.queue[self.tail] = item
         return True
 
     def dequeue(self):
+        """
+        Mengeluarkan produk dari buffer gudang (FIFO).
+        Big-O: O(1)
+        """
         if self.is_empty():
             return None
-
-        data = self.buffer[self.front]
-        self.buffer[self.front] = None
-        self.front = (self.front + 1) % self.kapasitas
-        self._size -= 1
-
-        return data
-
-    def peek(self):
-        if self.is_empty():
-            return None
-
-        return self.buffer[self.front]
-
-    def is_full(self):
-        return self._size == self.kapasitas
-
-    def is_empty(self):
-        return self._size == 0
-
-    def tampilkan_buffer(self):
-        if self.is_empty():
-            print('Buffer kosong')
-            return
-
-        idx = self.front
-        for _ in range(self._size):
-            print(self.buffer[idx])
-            idx = (idx + 1) % self.kapasitas
-
-    def __len__(self):
-        return self._size
+            
+        item = self.queue[self.head]
+        self.queue[self.head] = None
+        
+        if self.head == self.tail: # Reset jika queue kosong
+            self.head = -1
+            self.tail = -1
+        else:
+            self.head = (self.head + 1) % self.capacity
+            
+        return item

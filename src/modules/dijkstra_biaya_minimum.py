@@ -1,185 +1,63 @@
-# NEXT
-class EdgeNode:
-    def __init__(self, dest, jarak_km, biaya_per_km):
-        self.dest = dest
-        self.jarak_km = jarak_km
-        self.biaya_per_km = biaya_per_km
-        self.next = None
-
-
-class GraphRantaiPasok:
+def dijkstra_biaya_minimum(graph, start):
     """
-    Graph rantai pasok menggunakan adjacency list.
+    Mencari jalur termurah (bobot = jarak * biaya_km).
+    Big-O: O(V^2 + E) tanpa min-heap library.
     """
+    distances = {vertex: float('infinity') for vertex in graph.adj_list}
+    distances[start] = 0
+    previous_nodes = {vertex: None for vertex in graph.adj_list}
+    unvisited = list(graph.adj_list.keys())
 
-    def __init__(self):
-        self.adj = {}
+    while unvisited:
+        # Cari node dengan jarak terkecil di unvisited
+        current_node = min(unvisited, key=lambda vertex: distances[vertex])
+        unvisited.remove(current_node)
 
-    def tambah_node(self, node_id):
-        """
-        Menambahkan node baru.
-        Big-O: O(1)
-        """
-
-        if node_id not in self.adj:
-            self.adj[node_id] = None
-
-    def tambah_jalur(self, u, v, jarak, biaya_km):
-        """
-        Menambahkan edge dua arah.
-        Bobot = jarak * biaya_km
-
-        Big-O: O(1)
-        """
-
-        edge_uv = EdgeNode(v, jarak, biaya_km)
-        edge_uv.next = self.adj[u]
-        self.adj[u] = edge_uv
-
-        edge_vu = EdgeNode(u, jarak, biaya_km)
-        edge_vu.next = self.adj[v]
-        self.adj[v] = edge_vu
-
-    def tetangga(self, u):
-        """
-        Mengambil semua tetangga node.
-        Big-O: O(deg)
-        """
-
-        result = []
-
-        current = self.adj[u]
-
-        while current is not None:
-            result.append(current)
-            current = current.next
-
-        return result
-
-
-def dijkstra_biaya(graph, asal):
-    """
-    Dijkstra shortest path berdasarkan:
-
-        bobot = jarak_km * biaya_per_km
-
-    Big-O: O(V^2 + E)
-    """
-
-    INF = float('inf')
-
-    dist = {}
-    parent = {}
-    visited = set()
-
-    # inisialisasi
-    for v in graph.adj:
-        dist[v] = INF
-        parent[v] = None
-
-    dist[asal] = 0
-
-    while len(visited) < len(graph.adj):
-
-        # cari node minimum yang belum dikunjungi
-        min_node = None
-        min_dist = INF
-
-        for node in graph.adj:
-            if node not in visited and dist[node] < min_dist:
-                min_dist = dist[node]
-                min_node = node
-
-        if min_node is None:
+        if distances[current_node] == float('infinity'):
             break
 
-        visited.add(min_node)
+        for edge in graph.adj_list.get(current_node, []):
+            if isinstance(edge, dict):
+                neighbor = edge["node"]
+                bobot = edge["jarak"] * edge["biaya"]
+                new_route_cost = distances[current_node] + bobot
+                
+                if new_route_cost < distances[neighbor]:
+                    distances[neighbor] = new_route_cost
+                    previous_nodes[neighbor] = current_node
 
-        # relaksasi edge
-        current = graph.adj[min_node]
+    return distances, previous_nodes
 
-        while current is not None:
-
-            bobot = current.jarak_km * current.biaya_per_km
-
-            if dist[min_node] + bobot < dist[current.dest]:
-
-                dist[current.dest] = dist[min_node] + bobot
-                parent[current.dest] = min_node
-
-            current = current.next
-
-    return dist, parent
-
-
-def rekonstruksi_jalur(parent, tujuan):
+def merge_sort_jalur(jalur_list):
     """
-    Rekonstruksi jalur dari hasil Dijkstra.
-    """
-
-    path = []
-
-    current = tujuan
-
-    while current is not None:
-        path.append(current)
-        current = parent[current]
-
-    path.reverse()
-
-    return path
-
-
-# ==========================================
-# MERGE SORT UNTUK AUDIT BIAYA
-# ==========================================
-
-def merge(left, right):
-
-    result = []
-
-    i = 0
-    j = 0
-
-    while i < len(left) and j < len(right):
-
-        if left[i][1] <= right[j][1]:
-            result.append(left[i])
-            i += 1
-        else:
-            result.append(right[j])
-            j += 1
-
-    while i < len(left):
-        result.append(left[i])
-        i += 1
-
-    while j < len(right):
-        result.append(right[j])
-        j += 1
-
-    return result
-
-
-def merge_sort_biaya(data):
-    """
-    Mengurutkan jalur berdasarkan total biaya.
-
-    Format data:
-    [
-        (tujuan, biaya),
-        ...
-    ]
-
+    Mengurutkan daftar jalur berdasarkan biaya.
     Big-O: O(n log n)
     """
+    if len(jalur_list) > 1:
+        mid = len(jalur_list) // 2
+        left_half = jalur_list[:mid]
+        right_half = jalur_list[mid:]
 
-    if len(data) <= 1:
-        return data
+        merge_sort_jalur(left_half)
+        merge_sort_jalur(right_half)
 
-    mid = len(data) // 2
+        i = j = k = 0
+        while i < len(left_half) and j < len(right_half):
+            if left_half[i]['biaya'] < right_half[j]['biaya']:
+                jalur_list[k] = left_half[i]
+                i += 1
+            else:
+                jalur_list[k] = right_half[j]
+                j += 1
+            k += 1
 
-    left = merge_sort_biaya(data[:mid])
-    right = merge_sort_biaya(data[mid:])
+        while i < len(left_half):
+            jalur_list[k] = left_half[i]
+            i += 1
+            k += 1
 
-    return merge(left, right)
+        while j < len(right_half):
+            jalur_list[k] = right_half[j]
+            j += 1
+            k += 1
+    return jalur_list

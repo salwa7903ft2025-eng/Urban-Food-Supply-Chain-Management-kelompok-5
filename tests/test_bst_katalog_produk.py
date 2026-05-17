@@ -1,36 +1,23 @@
-import sys
-import os
-from dataclasses import dataclass
+import unittest
+from src.modules.bst_katalog_produk import KatalogProduk, Produk
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+class TestKatalogProduk(unittest.TestCase):
+    def test_insert_and_search(self):
+        katalog = KatalogProduk()
+        p1 = Produk(101, "Beras", "Pokok", 15000, 100, 30)
+        p2 = Produk(102, "Tomat", "Sayur", 8000, 50, 4)
+        
+        katalog.insert_produk(p1)
+        katalog.insert_produk(p2)
+        
+        hasil_search = katalog.search_produk(katalog.root, 102)
+        self.assertEqual(hasil_search.data.nama, "Tomat")
+        
+        mendekati_kadaluarsa = katalog.filter_kadaluarsa(katalog.root, 5)
+        self.assertEqual(len(mendekati_kadaluarsa), 1)
+        
+        # PERBAIKAN: Mengakses indeks [0] sebelum mengambil properti .nama
+        self.assertEqual(mendekati_kadaluarsa[0].nama, "Tomat")
 
-from modules.bst_katalog_produk import BSTKatalog
-
-@dataclass
-class Produk:
-    kode: str
-    nama: str
-    kategori: str
-    harga_satuan: float
-    stok: int
-    masa_kadaluarsa_hari: int
-
-print("CEK MODUL KATALOG")
-
-katalog = BSTKatalog()
-
-katalog.insert(Produk("101", "Beras Ramos", "POKOK", 15000.0, 100, 180))
-katalog.insert(Produk("105", "Minyak Bimoli", "MINYAK", 18000.0, 50, 90))
-katalog.insert(Produk("100", "Gula Gulaku", "POKOK", 14000.0, 200, 360))
-
-print("Input selesai\n")
-
-hasil = katalog.search("101")
-print(f"Cari ID 101: {hasil.nama if hasil else 'Gak ketemu'}")
-
-gaib = katalog.search("999")
-print(f"Cari ID 999: {gaib}")
-
-print("\nDaftar Katalog:")
-katalog.inorder(katalog.root)
+if __name__ == '__main__':
+    unittest.main()

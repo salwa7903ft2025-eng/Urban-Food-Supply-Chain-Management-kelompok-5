@@ -1,28 +1,20 @@
-import sys
-import os
-from dataclasses import dataclass
+import unittest
+from src.modules.priority_queue_pengiriman import PriorityQueuePengiriman
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../src')
-    )
-)
+class TestPriorityQueuePengiriman(unittest.TestCase):
+    def test_priority(self):
+        pq = PriorityQueuePengiriman()
+        # Normal (4-7 hari)
+        pq.enqueue("A", "B", "P02", 10, 5) 
+        # Mendesak (<= 3 hari)
+        pq.enqueue("A", "B", "P01", 10, 2) 
+        # Reguler (> 7 hari)
+        pq.enqueue("A", "B", "P03", 10, 10) 
+        
+        first = pq.dequeue()
+        self.assertEqual(first.kode_produk, "P01") # Mendesak keluar pertama
+        second = pq.dequeue()
+        self.assertEqual(second.kode_produk, "P02")
 
-from modules.priority_queue_pengiriman import PriorityQueueKirim
-
-@dataclass
-class Pengiriman:
-    pengiriman_id: int
-    prioritas: int
-    kode_produk: str
-
-pq = PriorityQueueKirim()
-
-pq.enqueue(Pengiriman(1, 2, 'PRD-001'))
-pq.enqueue(Pengiriman(2, 1, 'PRD-002'))
-pq.enqueue(Pengiriman(3, 3, 'PRD-003'))
-
-pq.tampilkan_antrian()
-
-print('\nDiproses:')
-print(pq.dequeue())
+if __name__ == '__main__':
+    unittest.main()

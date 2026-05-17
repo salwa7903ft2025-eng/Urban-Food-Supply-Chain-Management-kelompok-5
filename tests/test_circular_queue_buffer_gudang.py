@@ -1,23 +1,20 @@
-import sys
-import os
+import unittest
+from src.modules.circular_queue_buffer_gudang import CircularQueueBuffer
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../src')
-    )
-)
+class TestCircularQueueBuffer(unittest.TestCase):
+    def test_enqueue_dequeue(self):
+        cq = CircularQueueBuffer(capacity=3)
+        self.assertTrue(cq.is_empty())
+        
+        cq.enqueue("Produk1")
+        cq.enqueue("Produk2")
+        cq.enqueue("Produk3")
+        
+        self.assertTrue(cq.is_full())
+        self.assertFalse(cq.enqueue("Produk4")) # Harus gagal
+        
+        self.assertEqual(cq.dequeue(), "Produk1")
+        self.assertFalse(cq.is_full())
 
-from modules.circular_queue_buffer_gudang import CircularQueue
-
-queue = CircularQueue(3)
-
-queue.enqueue('Beras')
-queue.enqueue('Cabai')
-queue.enqueue('Tomat')
-
-print(queue.dequeue())
-print(queue.dequeue())
-
-queue.enqueue('Ayam')
-
-queue.tampilkan_buffer()
+if __name__ == '__main__':
+    unittest.main()

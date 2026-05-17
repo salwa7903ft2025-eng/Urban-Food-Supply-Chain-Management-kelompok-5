@@ -1,71 +1,32 @@
-class EdgeNode:
-    def __init__(self, dest, jarak_km, biaya_per_km):
-        self.dest = dest
-        self.jarak_km = jarak_km
-        self.biaya_per_km = biaya_per_km
-        self.next = None
+from ..data_structures.graph import Graph
 
-        # PERBAIKAN: Tambahkan method untuk menghitung total biaya
-
-class GraphRantaiPasok:
+class GraphRantaiPasok(Graph):
     def __init__(self):
-        self.adj = {}
-        self.tipe_node = {}
+        super().__init__()
+        
+    def add_edge_weighted(self, v1, v2, jarak, biaya):
+        """
+        Menambahkan jalur distribusi dengan bobot jarak (km) dan biaya per km.
+        Big-O: O(1)
+        """
+        self.add_vertex(v1)
+        self.add_vertex(v2)
+        # Hapus koneksi default jika ada, lalu ganti dengan dictionary berbobot
+        self.adj_list[v1].append({"node": v2, "jarak": jarak, "biaya": biaya})
+        self.adj_list[v2].append({"node": v1, "jarak": jarak, "biaya": biaya})
 
-    def tambah_node(self, node_id, tipe):
-        if node_id not in self.adj:
-            self.adj[node_id] = None
-            self.tipe_node[node_id] = tipe
-
-    def tambah_jalur(self, u, v, jarak, biaya_km):
-        edge_uv = EdgeNode(v, jarak, biaya_km)
-        edge_uv.next = self.adj[u]
-        self.adj[u] = edge_uv
-
-        edge_vu = EdgeNode(u, jarak, biaya_km)
-        edge_vu.next = self.adj[v]
-        self.adj[v] = edge_vu
-
-    def tetangga(self, u):
-        hasil = []
-        curr = self.adj.get(u)
-
-        while curr:
-            hasil.append({
-                'tujuan': curr.dest,
-                'jarak_km': curr.jarak_km,
-                'biaya_per_km': curr.biaya_per_km,
-                'total_biaya': curr.jarak_km * curr.biaya_per_km
-            })
-            curr = curr.next
-
-        return hasil
-
-    def dfs(self, start, visited=None):
+    def dfs_audit(self, start, visited=None):
+        """
+        Audit konektivitas jaringan menggunakan DFS.
+        Big-O: O(V + E)
+        """
         if visited is None:
             visited = set()
-
         visited.add(start)
-        print(start, end=' ')
-
-        curr = self.adj[start]
-        while curr:
-            if curr.dest not in visited:
-                self.dfs(curr.dest, visited)
-            curr = curr.next
-
-    def bfs(self, start):
-        visited = set()
-        queue = [start]
-        visited.add(start)
-
-        while queue:
-            node = queue.pop(0)
-            print(node, end=' ')
-
-            curr = self.adj[node]
-            while curr:
-                if curr.dest not in visited:
-                    visited.add(curr.dest)
-                    queue.append(curr.dest)
-                curr = curr.next
+        print(start, end=" ")
+        
+        for neighbor_data in self.adj_list.get(start, []):
+            neighbor = neighbor_data if isinstance(neighbor_data, str) else neighbor_data["node"]
+            if neighbor not in visited:
+                self.dfs_audit(neighbor, visited)
+        return visited

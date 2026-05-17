@@ -1,26 +1,15 @@
-import sys
-import os
+import unittest
+from src.modules.graph_rantai_pasok import GraphRantaiPasok
 
-sys.path.append(
-    os.path.abspath(
-        os.path.join(os.path.dirname(__file__), '../src')
-    )
-)
+class TestGraphRantaiPasok(unittest.TestCase):
+    def test_add_edge_and_dfs(self):
+        g = GraphRantaiPasok()
+        g.add_edge_weighted("PetaniA", "Distributor1", jarak=10, biaya=5000)
+        g.add_edge_weighted("Distributor1", "PasarX", jarak=5, biaya=7000)
+        
+        visited = g.dfs_audit("PetaniA")
+        self.assertIn("PasarX", visited)
+        self.assertEqual(len(visited), 3)
 
-from modules.graph_rantai_pasok import GraphRantaiPasok
-
-graph = GraphRantaiPasok()
-
-graph.tambah_node('PTN01', 'PETANI')
-graph.tambah_node('DST01', 'DISTRIBUTOR')
-
-graph.tambah_jalur('PTN01', 'DST01', 25, 3000)
-
-print('Tetangga PTN01:')
-print(graph.tetangga('PTN01'))
-
-print('\nDFS:')
-graph.dfs('PTN01')
-
-print('\n\nBFS:')
-graph.bfs('PTN01')
+if __name__ == '__main__':
+    unittest.main()

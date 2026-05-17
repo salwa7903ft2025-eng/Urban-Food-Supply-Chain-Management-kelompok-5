@@ -1,7 +1,5 @@
-class Node:
-    def __init__(self, data):
-        self.data = data
-        self.next = None
+# Import Node dari file node.py yang berada di folder yang sama
+from src.data_structures.node import Node
 
 class QueueLL:
     def __init__(self):
