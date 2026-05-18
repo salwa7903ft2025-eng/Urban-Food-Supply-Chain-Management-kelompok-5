@@ -50,6 +50,9 @@ AI melakukan review dan optimasi pada implementasi Binary Search Tree (BST):
     implementasi struktur dasar.png
 
 ==========================================================
+NAMA : Muhammad Rafli Nur 
+NIM 07
+
 AI log Modul 2 : Circular Queue
 Prompt : 
 Saya ingin membuat sebuah program, jadi buatkan kode syntax yang lengkap seperti pada contoh starter py yang ada di foto untuk menyelesaikan modul nomer 2, untuk kapasitas buffer sudah tertera juga di foto. untuk setiap node Circular Queue berbasis array.
@@ -2549,4 +2552,11 @@ Tanggal: 17 Mei 2026
         {AI RESPONSE}
             
             (attachment file "contoh ai response.txt")
+Nama : Arryo Satria Wicaksono
+Nim : 27
+AI Prompt : buatkan kode program untuk topik 10 modul 1 sampai 6 berdasarkan arsitektur pipeline di file pdf tersebut dengan struktur kode program seperti di foto tersebut
+
+AI Response : Mmberikan kode program yang sesuai dengan struktur yang telah diberikan didalam file pdf 
+
+
 
